@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTheme } from '../contexts/ThemeProvider';
 import { usePresets } from '../contexts/PresetsContext';
-import { Sun, Moon, Laptop, Pencil, Trash } from 'lucide-react';
+import { Sun, Moon, Laptop, Pencil, Trash, Save, X, Check, FileJson } from 'lucide-react';
 
 const Settings: React.FC = () => {
   const { theme, setTheme } = useTheme();
@@ -55,63 +55,57 @@ const Settings: React.FC = () => {
   };
   
   return (
-    <div className="container mx-auto py-6">
-      <div className="space-y-8">
+    <div className="pb-20 md:pb-0">
+      <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Settings</h1>
-          <p className="text-muted-foreground">Customize your unit converter experience</p>
+          <p className="text-muted-foreground">Customize your Calcq experience</p>
         </div>
         
         {/* Theme Settings */}
-        <div className="bg-card border border-border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">Appearance</h2>
+        <div className="bg-card border border-border rounded-lg p-5">
+          <h2 className="text-lg font-semibold mb-3">Appearance</h2>
           
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Theme
               </label>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => setTheme('light')}
-                  className={`flex-1 p-3 rounded-md border ${
+                  className={`flex flex-col items-center gap-1.5 p-2.5 rounded-md border ${
                     theme === 'light' 
-                      ? 'border-primary bg-primary/10' 
-                      : 'border-border bg-muted'
+                      ? 'border-primary bg-primary/10 text-primary' 
+                      : 'border-border bg-background text-foreground'
                   }`}
                 >
-                  <div className="flex items-center justify-center gap-2">
-                    <Sun className="w-5 h-5" />
-                    <span>Light</span>
-                  </div>
+                  <Sun className="w-5 h-5" />
+                  <span className="text-xs font-medium">Light</span>
                 </button>
                 
                 <button
                   onClick={() => setTheme('dark')}
-                  className={`flex-1 p-3 rounded-md border ${
+                  className={`flex flex-col items-center gap-1.5 p-2.5 rounded-md border ${
                     theme === 'dark' 
-                      ? 'border-primary bg-primary/10' 
-                      : 'border-border bg-muted'
+                      ? 'border-primary bg-primary/10 text-primary' 
+                      : 'border-border bg-background text-foreground'
                   }`}
                 >
-                  <div className="flex items-center justify-center gap-2">
-                    <Moon className="w-5 h-5" />
-                    <span>Dark</span>
-                  </div>
+                  <Moon className="w-5 h-5" />
+                  <span className="text-xs font-medium">Dark</span>
                 </button>
                 
                 <button
                   onClick={() => setTheme('system')}
-                  className={`flex-1 p-3 rounded-md border ${
+                  className={`flex flex-col items-center gap-1.5 p-2.5 rounded-md border ${
                     theme === 'system' 
-                      ? 'border-primary bg-primary/10' 
-                      : 'border-border bg-muted'
+                      ? 'border-primary bg-primary/10 text-primary' 
+                      : 'border-border bg-background text-foreground'
                   }`}
                 >
-                  <div className="flex items-center justify-center gap-2">
-                    <Laptop className="w-5 h-5" />
-                    <span>System</span>
-                  </div>
+                  <Laptop className="w-5 h-5" />
+                  <span className="text-xs font-medium">System</span>
                 </button>
               </div>
             </div>
@@ -119,56 +113,61 @@ const Settings: React.FC = () => {
         </div>
         
         {/* Preset Management */}
-        <div className="bg-card border border-border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">Preset Management</h2>
+        <div className="bg-card border border-border rounded-lg p-5">
+          <h2 className="text-lg font-semibold mb-3">Presets</h2>
           
           {presets.length === 0 ? (
-            <p className="text-muted-foreground">No presets saved yet.</p>
+            <div className="p-3 bg-muted/50 rounded-md text-center">
+              <p className="text-sm text-muted-foreground">No presets saved</p>
+              <p className="text-xs text-muted-foreground mt-1">Create presets from the converter page</p>
+            </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {presets.map(preset => (
                 <div 
                   key={preset.id} 
-                  className="flex items-center justify-between p-3 bg-muted rounded-md"
+                  className="flex items-center justify-between p-2.5 bg-muted/50 rounded-md"
                 >
                   {isEditingPreset === preset.id ? (
-                    <div className="flex-1 flex gap-2">
+                    <div className="flex-1 flex items-center gap-2">
                       <input
                         type="text"
                         value={editPresetName}
                         onChange={(e) => setEditPresetName(e.target.value)}
-                        className="flex-1 bg-background text-foreground border border-input rounded-md px-3 py-1"
+                        className="flex-1 bg-background text-foreground border border-input rounded-md px-2.5 py-1 text-sm"
                       />
                       <button
                         onClick={handleSavePresetEdit}
-                        className="text-primary"
+                        className="p-1 rounded-sm text-primary hover:bg-primary/10"
+                        aria-label="Save"
                       >
-                        Save
+                        <Save className="w-4 h-4" />
                       </button>
                       <button
                         onClick={handleCancelPresetEdit}
-                        className="text-muted-foreground"
+                        className="p-1 rounded-sm text-muted-foreground hover:bg-muted"
+                        aria-label="Cancel"
                       >
-                        Cancel
+                        <X className="w-4 h-4" />
                       </button>
                     </div>
                   ) : (
                     <>
-                      <span className="font-medium">{preset.name}</span>
-                      <div className="flex gap-2">
+                      <span className="text-sm font-medium">{preset.name}</span>
+                      <div className="flex gap-1">
                         <button
                           onClick={() => handleEditPreset(preset.id, preset.name)}
-                          className="text-foreground hover:text-primary"
+                          className="p-1 rounded-sm text-muted-foreground hover:text-primary hover:bg-muted/70"
                           aria-label="Edit preset"
                         >
-                          <Pencil className="w-4 h-4" />
+                          <Pencil className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => removePreset(preset.id)}
-                          className="text-foreground hover:text-destructive"
+                          className="p-1 rounded-sm text-muted-foreground hover:text-destructive hover:bg-muted/70"
                           aria-label="Delete preset"
                         >
-                          <Trash className="w-4 h-4" />
+                          <Trash className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </>
@@ -180,91 +179,96 @@ const Settings: React.FC = () => {
         </div>
         
         {/* Custom Units */}
-        <div className="bg-card border border-border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">Custom Units</h2>
-          <p className="text-muted-foreground mb-4">
-            Import custom units JSON library to extend the available conversions.
+        <div className="bg-card border border-border rounded-lg p-5">
+          <h2 className="text-lg font-semibold mb-3">Custom Units</h2>
+          <p className="text-sm text-muted-foreground mb-3">
+            Import custom units library to extend available conversions
           </p>
           
           <button
             onClick={() => setShowImportModal(true)}
-            className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
+            className="inline-flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 text-sm rounded-md hover:bg-primary/90 transition-colors"
           >
-            Import Units Library
+            <FileJson className="w-3.5 h-3.5" />
+            <span>Import Library</span>
           </button>
         </div>
         
         {/* Data Management */}
-        <div className="bg-card border border-border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">Data Management</h2>
+        <div className="bg-card border border-border rounded-lg p-5">
+          <h2 className="text-lg font-semibold mb-3">Data</h2>
           
-          <div className="space-y-2">
-            <button
-              onClick={() => {
+          <button
+            onClick={() => {
+              if (confirm('Are you sure you want to reset all data? This cannot be undone.')) {
                 localStorage.clear();
                 window.location.reload();
-              }}
-              className="w-full bg-destructive text-destructive-foreground px-4 py-2 rounded-md hover:bg-destructive/90 transition-colors"
-            >
-              Reset All Data
-            </button>
-            <p className="text-xs text-muted-foreground">
-              This will clear all presets, favorites, history, and settings.
-            </p>
-          </div>
+              }
+            }}
+            className="inline-flex items-center gap-1.5 w-full bg-muted text-foreground px-3 py-1.5 text-sm rounded-md hover:bg-destructive hover:text-destructive-foreground transition-colors"
+          >
+            <Trash className="w-3.5 h-3.5" />
+            <span>Reset All Data</span>
+          </button>
+          <p className="text-xs text-muted-foreground mt-1.5">
+            Clears all presets, favorites, history, and settings
+          </p>
         </div>
         
         {/* About Section */}
-        <div className="bg-card border border-border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-2">About</h2>
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <p>Unit Converter PWA v1.0.0</p>
-            <p>A modern, feature-rich unit conversion tool.</p>
-            <p>Supports 4,500+ units across 33 categories.</p>
+        <div className="bg-card border border-border rounded-lg p-5">
+          <h2 className="text-lg font-semibold mb-2">About</h2>
+          <div className="space-y-1 text-sm text-muted-foreground">
+            <p>Calcq v1.0.0</p>
+            <p>A modern, feature-rich unit conversion tool</p>
           </div>
         </div>
       </div>
       
       {/* Import Modal */}
       {showImportModal && (
-        <div className="fixed inset-0 bg-background/80 flex items-center justify-center p-4 z-50">
-          <div className="bg-card border border-border rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-4">Import Units Library</h2>
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-card border border-border rounded-lg shadow-lg p-5 w-full max-w-md">
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-lg font-semibold">Import Units Library</h2>
+              <button 
+                onClick={() => setShowImportModal(false)}
+                className="text-muted-foreground hover:text-foreground p-1 rounded-full"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
             
             <div className="mb-4">
-              <label htmlFor="importData" className="block text-sm font-medium text-foreground mb-1">
+              <label htmlFor="importData" className="block text-sm font-medium text-foreground mb-1.5">
                 Paste JSON Data
               </label>
               <textarea
                 id="importData"
                 value={importData}
                 onChange={(e) => setImportData(e.target.value)}
-                rows={8}
-                className="w-full bg-background text-foreground border border-input rounded-md px-3 py-2"
+                rows={6}
+                className="w-full bg-background text-foreground border border-input rounded-md px-3 py-2 text-sm"
                 placeholder={'{\n  "categories": [\n    {\n      "id": "custom",\n      "name": "Custom Units",\n      "units": []\n    }\n  ]\n}'}
               />
               {importError && (
-                <p className="mt-1 text-sm text-destructive">{importError}</p>
+                <p className="mt-1.5 text-xs text-destructive">{importError}</p>
               )}
             </div>
             
-            <div className="flex justify-end gap-2">
+            <div className="flex gap-2 justify-end">
               <button
-                onClick={() => {
-                  setShowImportModal(false);
-                  setImportData('');
-                  setImportError('');
-                }}
-                className="bg-muted text-foreground rounded-md px-4 py-2 hover:bg-muted/80 transition-colors"
+                onClick={() => setShowImportModal(false)}
+                className="px-3 py-1.5 text-sm border border-border rounded-md bg-muted text-foreground hover:bg-muted/70 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleImportUnitsLibrary}
-                disabled={!importData.trim()}
-                className="bg-primary text-primary-foreground rounded-md px-4 py-2 hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-1.5 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors inline-flex items-center gap-1.5"
               >
-                Import
+                <Check className="w-3.5 h-3.5" />
+                <span>Import</span>
               </button>
             </div>
           </div>

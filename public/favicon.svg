@@ -1,6 +1,6 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
   <style>
-    rect { fill: rgba(255, 255, 255, 0.9); }
+    rect { fill: black; }
     path { stroke: white; }
     @media (prefers-color-scheme: light) {
       rect { fill: white; }

@@ -1,7 +1,7 @@
 {
-  "name": "Unit Converter",
-  "short_name": "UnitConverter",
-  "description": "Convert between 4,500+ units across 33 categories",
+  "name": "Calcq",
+  "short_name": "Calcq",
+  "description": "Fast, accurate unit conversions at your fingertips",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
