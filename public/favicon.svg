@@ -1,0 +1,13 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    rect { fill: rgba(255, 255, 255, 0.9); }
+    path { stroke: white; }
+    @media (prefers-color-scheme: light) {
+      rect { fill: white; }
+      path { stroke: black; }
+    }
+  </style>
+  <rect width="512" height="512" rx="100"/>
+  <path d="M128 192H384M128 256H384M128 320H384" stroke-width="32" stroke-linecap="round"/>
+  <path d="M192 128L192 384M256 128V384M320 128V384" stroke-width="32" stroke-linecap="round"/>
+</svg> 
