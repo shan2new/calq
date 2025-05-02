@@ -9,7 +9,7 @@ import { ArrowUpDown, Star, MoveRight } from 'lucide-react';
 const Converter: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { addToHistory } = useHistory();
-  const { favorites, addToFavorites, isInFavorites, removeFromFavorites } = useFavorites();
+  const { addToFavorites, isInFavorites, removeFromFavorites } = useFavorites();
   const { presets, addPreset } = usePresets();
   
   // Get category from URL or use default
