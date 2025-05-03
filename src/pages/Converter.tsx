@@ -974,7 +974,6 @@ const Converter: React.FC = () => {
                         value={fromValue}
                         onChange={handleInputChange}
                         placeholder="Enter a value..."
-                        autoFocus
                       />
                     </div>
                     
@@ -1068,7 +1067,6 @@ const Converter: React.FC = () => {
                         onChange={(e) => setPresetName(e.target.value)}
                         placeholder="Enter a name for this preset"
                         className="w-full p-2 bg-muted border-0 rounded-md"
-                        autoFocus
                       />
                     </div>
                     
