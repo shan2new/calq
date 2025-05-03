@@ -54,7 +54,7 @@ const defaultPreferences: UserPreferences = {
     timeFormat: '24h',
   },
   themeCustomization: {
-    primaryColor: '#0284c7',
+    primaryColor: '#000',
     roundedCorners: true,
     fontScale: 1,
   },
@@ -111,7 +111,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Apply theme customization if provided
       if (userPreferences.themeCustomization) {
         const root = document.documentElement;
-        root.style.setProperty('--primary', userPreferences.themeCustomization.primaryColor);
+        // root.style.setProperty('--primary', userPreferences.themeCustomization.primaryColor);
         
         // Apply font scaling if needed
         if (userPreferences.themeCustomization.fontScale !== 1) {

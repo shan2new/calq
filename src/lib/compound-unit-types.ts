@@ -83,10 +83,10 @@ export const compoundFormats: Record<CompoundFormatType, CompoundFormatConfig> =
     name: 'Cooking',
     description: 'Cooking measurements with mixed units',
     categoryId: UnitCategoryId.VOLUME,
-    defaultFromFormat: ['cup', 'tablespoon', 'teaspoon'],
+    defaultFromFormat: ['cup_us', 'tablespoon_us', 'teaspoon_us'],
     defaultToFormat: ['milliliter'],
     allowedUnitIds: [
-      'cup', 'tablespoon', 'teaspoon', 'fluid_ounce', 'pint', 'quart', 'gallon',
+      'cup_us', 'tablespoon_us', 'teaspoon_us', 'fluid_ounce_us', 'pint_us', 'quart_us', 'gallon_us',
       'milliliter', 'liter', 'deciliter'
     ],
     displayPattern: '{0} {0:unit} {1} {1:unit} {2} {2:unit}',

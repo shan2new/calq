@@ -138,6 +138,19 @@ export async function parseCompoundInput(
   // Load the unit category for this format
   const categoryData = await loadUnitCategory(formatConfig.categoryId);
 
+  // Helper to map common informal unit names to formal unit IDs
+  const mapCommonUnitName = (index: number, format: CompoundFormatType): string => {
+    // For cooking format
+    if (format === CompoundFormatType.COOKING) {
+      if (index === 0) return 'cup_us';      // First unit is cup
+      if (index === 1) return 'tablespoon_us'; // Second unit is tablespoon
+      if (index === 2) return 'teaspoon_us';  // Third unit is teaspoon
+    }
+    
+    // For other formats or if no mapping needed, use the default format
+    return formatConfig.defaultFromFormat[index];
+  };
+
   // Try to parse using the format's parsing patterns
   for (const pattern of formatConfig.parsePatterns) {
     const regex = new RegExp(pattern, 'i');
@@ -157,20 +170,26 @@ export async function parseCompoundInput(
             const numerator = parseInt(match[i+1], 10) || 0;
             const denominator = parseInt(match[i+2], 10) || 1;
             
+            // Map the unit ID correctly
+            const unitId = mapCommonUnitName(0, formatType);
+            
             components.push({
               value: whole + (numerator / denominator),
-              unitId: formatConfig.defaultFromFormat[0],
-              unit: findUnitInCategory(categoryData, formatConfig.defaultFromFormat[0])
+              unitId: unitId,
+              unit: findUnitInCategory(categoryData, unitId)
             });
             
             // Skip the next two groups since we used them for the fraction
             i += 2;
           } else {
             // Standard integer parsing
+            // Map the unit ID correctly
+            const unitId = mapCommonUnitName(i - 1, formatType);
+            
             components.push({
               value: parseInt(match[i], 10) || 0,
-              unitId: formatConfig.defaultFromFormat[i - 1],
-              unit: findUnitInCategory(categoryData, formatConfig.defaultFromFormat[i - 1])
+              unitId: unitId,
+              unit: findUnitInCategory(categoryData, unitId)
             });
           }
         }
@@ -190,6 +209,45 @@ export async function parseCompoundInput(
   if (singleValueMatch) {
     const value = parseFloat(singleValueMatch[1]);
     const unitText = singleValueMatch[2].toLowerCase();
+    
+    // Map common unit names to their formal IDs
+    const unitMappings: Record<string, string> = {
+      'cup': 'cup_us',
+      'cups': 'cup_us',
+      'tbsp': 'tablespoon_us',
+      'tbs': 'tablespoon_us',
+      'tablespoon': 'tablespoon_us',
+      'tablespoons': 'tablespoon_us',
+      'tsp': 'teaspoon_us',
+      'teaspoon': 'teaspoon_us',
+      'teaspoons': 'teaspoon_us',
+      'oz': 'fluid_ounce_us',
+      'fl oz': 'fluid_ounce_us',
+      'fluid ounce': 'fluid_ounce_us',
+      'fluid ounces': 'fluid_ounce_us',
+      'pt': 'pint_us',
+      'pint': 'pint_us',
+      'pints': 'pint_us',
+      'qt': 'quart_us',
+      'quart': 'quart_us',
+      'quarts': 'quart_us',
+      'gal': 'gallon_us',
+      'gallon': 'gallon_us',
+      'gallons': 'gallon_us'
+    };
+    
+    // Try direct mapping first
+    if (unitMappings[unitText]) {
+      const unitId = unitMappings[unitText];
+      return {
+        components: [{
+          value,
+          unitId,
+          unit: findUnitInCategory(categoryData, unitId)
+        }],
+        categoryId: formatConfig.categoryId
+      };
+    }
     
     // Try to find the unit based on the text
     let matchedUnitId = '';
