@@ -232,12 +232,7 @@ const History: React.FC = () => {
   return (
     <div className="pb-20 md:pb-0">
       <div className="space-y-5">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">History</h1>
-            <p className="text-muted-foreground">Your recent unit conversions</p>
-          </div>
-          
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">          
           <div className="flex flex-wrap gap-2">
             <button
               onClick={exportToCSV}

@@ -785,9 +785,7 @@ const Converter: React.FC = () => {
         />
       )}
       
-      <div className="container mx-auto px-4 py-6 max-w-3xl">
-        {/* Compact title */}
-        <h1 className="text-lg font-medium text-primary mb-3">Unit Converter</h1>
+      <div className="container mx-auto max-w-3xl">
         
         {isLoading ? (
           <ConverterSkeleton />

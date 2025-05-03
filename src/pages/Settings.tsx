@@ -56,12 +56,7 @@ const Settings: React.FC = () => {
   
   return (
     <div className="pb-20 md:pb-0">
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Settings</h1>
-          <p className="text-muted-foreground">Customize your Calcq experience</p>
-        </div>
-        
+      <div className="space-y-6">        
         {/* Theme Settings */}
         <div className="bg-card border border-border rounded-lg p-5">
           <h2 className="text-lg font-semibold mb-3">Appearance</h2>
