@@ -38,9 +38,11 @@ const ConverterWithSpecialized: React.FC<ConverterProps> = ({
   
   // Extract parameters for SEO metadata from the URL
   const seoParams = React.useMemo(() => {
+    // Use different parameter extraction based on URL format
     if (location.pathname.startsWith('/convert/')) {
       return parseCanonicalPath(location.pathname);
     } else {
+      // For legacy URL format, use query parameters
       return {
         category: searchParams.get('category') || initialCategory || undefined,
         fromUnit: searchParams.get('from') || initialFromUnit || undefined,
@@ -94,7 +96,7 @@ const ConverterWithSpecialized: React.FC<ConverterProps> = ({
   const isHeightEnabled = userPreferences.compoundPreferences.preferredFormats[CompoundFormatType.HEIGHT]?.enabled ?? true;
   const isCookingEnabled = userPreferences.compoundPreferences.preferredFormats[CompoundFormatType.COOKING]?.enabled ?? true;
   
-  // Create SEO metadata based on URL parameters
+  // Create SEO metadata based on URL parameters and format
   const seoTitle = seoParams?.fromUnit && seoParams?.toUnit && seoParams?.category
     ? `Convert ${seoParams.fromUnit} to ${seoParams.toUnit} | ${seoParams.category} Converter | Calcq`
     : 'Unit Converter | Calcq';
@@ -103,9 +105,12 @@ const ConverterWithSpecialized: React.FC<ConverterProps> = ({
     ? `Convert ${seoParams?.value || ''} ${seoParams.fromUnit} to ${seoParams.toUnit} with Calcq's ${seoParams.category} converter. Instant, accurate calculations.`
     : 'Convert between 4,500+ units across 33 categories with Calcq. Fast, accurate, and user-friendly.';
   
-  const canonicalPath = seoParams?.fromUnit && seoParams?.toUnit && seoParams?.category
-    ? buildCanonicalPath(seoParams.category, seoParams.fromUnit, seoParams.toUnit, seoParams.value)
-    : null;
+  // Build canonical path differently based on URL format
+  const canonicalPath = useLegacyUrlFormat
+    ? null // Don't provide canonical path for legacy format
+    : (seoParams?.fromUnit && seoParams?.toUnit && seoParams?.category
+      ? buildCanonicalPath(seoParams.category, seoParams.fromUnit, seoParams.toUnit, seoParams.value)
+      : null);
   
   return (
     <div className="container mx-auto max-w-3xl">
