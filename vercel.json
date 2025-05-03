@@ -11,5 +11,6 @@
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/api/ssr.js" }
   ],
-  "buildCommand": "npm run build:ssr"
+  "buildCommand": "npm run build:ssr",
+  "installCommand": "npm install --legacy-peer-deps"
 } 
