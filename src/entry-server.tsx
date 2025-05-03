@@ -10,6 +10,7 @@ import { HistoryProvider } from './contexts/HistoryContext';
 import { FavoritesProvider } from './contexts/FavoritesContext';
 import { PresetsProvider } from './contexts/PresetsContext';
 import { UserProvider } from './contexts/UserContext';
+import { PostHogProvider } from 'posthog-js/react';
 
 export function render(url: string) {
   const helmetContext = {};
@@ -23,21 +24,29 @@ export function render(url: string) {
   
   // Render the app to string
   const appHtml = renderToString(
-    <HelmetProvider context={helmetContext}>
-      <ThemeProvider>
-        <UserProvider>
-          <HistoryProvider>
-            <FavoritesProvider>
-              <PresetsProvider>
-                <StaticRouter location={url}>
-                  <App />
-                </StaticRouter>
-              </PresetsProvider>
-            </FavoritesProvider>
-          </HistoryProvider>
-        </UserProvider>
-      </ThemeProvider>
-    </HelmetProvider>
+    <PostHogProvider
+      apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_KEY}
+      options={{
+        api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+        debug: import.meta.env.MODE === 'development',
+      }}
+    >
+      <HelmetProvider context={helmetContext}>
+        <ThemeProvider>
+          <UserProvider>
+            <HistoryProvider>
+              <FavoritesProvider>
+                <PresetsProvider>
+                  <StaticRouter location={url}>
+                    <App />
+                  </StaticRouter>
+                </PresetsProvider>
+              </FavoritesProvider>
+            </HistoryProvider>
+          </UserProvider>
+        </ThemeProvider>
+      </HelmetProvider>
+    </PostHogProvider>
   );
   
   // Return HTML string and context
@@ -46,4 +55,4 @@ export function render(url: string) {
     appState,
     helmetContext 
   };
-} 
+}

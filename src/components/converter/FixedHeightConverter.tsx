@@ -12,6 +12,14 @@ import { convertCompound, parseCompoundInput } from '../../lib/compound-conversi
 import CompoundUnitInput from './CompoundUnitInput';
 import { Ruler, Clipboard, BookmarkPlus, BookmarkCheck, ArrowUpDown } from 'lucide-react';
 import { ensureValidTargetUnits } from './utils';
+import { 
+  trackConversion, 
+  trackFavoriteAdded, 
+  trackFavoriteRemoved, 
+  trackReferencePointUsed, 
+  trackCopyResult, 
+  trackSwapUnits 
+} from '../../lib/analytics';
 
 const HEIGHT_REFERENCE_POINTS = [
   { name: 'Average adult male (US)', value: "5'9\"", metric: '175 cm' },
@@ -111,13 +119,28 @@ const FixedHeightConverter: React.FC<HeightConverterProps> = ({ onShowToast }) =
       
       // Add to history - use the primary units for standard history tracking
       if (result.converted.components.length > 0) {
+        const fromUnit = fromMeasurement.components[0]?.unitId || '';
+        const toUnit = result.converted.components[0]?.unitId || '';
+        const fromValue = fromMeasurement.components[0]?.value || 0;
+        const toValue = result.converted.components[0]?.value || 0;
+        const category = fromMeasurement.categoryId;
+        
         addToHistory({
-          fromValue: fromMeasurement.components[0]?.value || 0,
-          fromUnit: fromMeasurement.components[0]?.unitId || '',
-          toUnit: result.converted.components[0]?.unitId || '',
-          toValue: result.converted.components[0]?.value || 0,
-          category: fromMeasurement.categoryId
+          fromValue,
+          fromUnit,
+          toUnit,
+          toValue,
+          category
         });
+        
+        // Track the conversion in PostHog
+        trackConversion(
+          category,
+          fromUnit,
+          toUnit,
+          fromValue,
+          toValue
+        );
       }
       
     } catch (error) {
@@ -167,21 +190,34 @@ const FixedHeightConverter: React.FC<HeightConverterProps> = ({ onShowToast }) =
     const conversionId = getConversionId();
     if (!conversionId) return;
     
+    const fromUnit = fromMeasurement.components[0]?.unitId || '';
+    const toUnit = conversionResult.converted.components[0]?.unitId || '';
+    const category = fromMeasurement.categoryId;
+    
     if (isFavorite()) {
       removeFromFavorites(conversionId);
       onShowToast?.('Removed from favorites', 'success');
+      
+      // Track the favorite removal in PostHog
+      trackFavoriteRemoved(category, fromUnit, toUnit);
     } else {
       // Use standard favorite format with the primary units
+      const fromValue = fromMeasurement.components[0]?.value || 0;
+      const toValue = conversionResult.converted.components[0]?.value || 0;
+      
       addToFavorites({
         id: conversionId,
-        fromValue: fromMeasurement.components[0]?.value || 0,
-        fromUnit: fromMeasurement.components[0]?.unitId || '',
-        toUnit: conversionResult.converted.components[0]?.unitId || '',
-        toValue: conversionResult.converted.components[0]?.value || 0,
-        category: fromMeasurement.categoryId,
+        fromValue,
+        fromUnit,
+        toUnit,
+        toValue,
+        category,
         timestamp: Date.now()
       });
       onShowToast?.('Added to favorites', 'success');
+      
+      // Track the favorite addition in PostHog
+      trackFavoriteAdded(category, fromUnit, toUnit);
     }
   }, [conversionResult, fromMeasurement, getConversionId, isFavorite, removeFromFavorites, addToFavorites, onShowToast]);
   
@@ -195,7 +231,16 @@ const FixedHeightConverter: React.FC<HeightConverterProps> = ({ onShowToast }) =
     setFromMeasurement(toMeasurement);
     
     onShowToast?.('Swapped units', 'info');
-  }, [toMeasurement, onShowToast]);
+    
+    // Track the swap units action in PostHog
+    if (fromMeasurement && toMeasurement) {
+      const fromUnit = fromMeasurement.components[0]?.unitId || '';
+      const toUnit = toMeasurement.components[0]?.unitId || '';
+      const category = fromMeasurement.categoryId;
+      
+      trackSwapUnits(category, fromUnit, toUnit);
+    }
+  }, [toMeasurement, onShowToast, fromMeasurement]);
   
   // Format for display
   const getFormattedHeight = useCallback((measurement: CompoundMeasurement | null): string => {
@@ -226,34 +271,50 @@ const FixedHeightConverter: React.FC<HeightConverterProps> = ({ onShowToast }) =
     }).join(' ');
   }, []);
   
-  // Copy result to clipboard
-  const handleCopyResult = useCallback(() => {
+  // Handle copy to clipboard
+  const handleCopyToClipboard = useCallback(() => {
     if (!toMeasurement) return;
     
-    const formattedHeight = getFormattedHeight(toMeasurement);
-    navigator.clipboard.writeText(formattedHeight);
+    // Format the result for the clipboard
+    const formattedResult = toMeasurement.components.map(comp => 
+      `${comp.value} ${comp.unitId}`
+    ).join(' ');
     
-    onShowToast?.('Copied to clipboard', 'success');
-  }, [toMeasurement, getFormattedHeight, onShowToast]);
-  
-  // Apply a reference point
-  const handleApplyReference = (reference: { value: string; metric: string }) => {
-    // Apply the reference based on current unit preference
-    const isMetric = userPreferences.regionalPresets.metric;
-    const valueToApply = isMetric ? reference.metric : reference.value;
-    
-    // Parse the reference value and set it as input
-    parseCompoundInput(valueToApply, CompoundFormatType.HEIGHT)
-      .then(measurement => {
-        if (measurement) {
-          setFromMeasurement(measurement);
+    navigator.clipboard.writeText(formattedResult)
+      .then(() => {
+        onShowToast?.('Copied to clipboard', 'success');
+        
+        // Track the copy action in PostHog
+        if (fromMeasurement) {
+          trackCopyResult(fromMeasurement.categoryId);
         }
       })
       .catch(err => {
-        console.error('Error parsing reference value:', err);
-        setError('Failed to apply reference height');
+        console.error('Failed to copy: ', err);
+        onShowToast?.('Failed to copy to clipboard', 'error');
       });
-  };
+  }, [toMeasurement, onShowToast, fromMeasurement]);
+  
+  // Handle applying a reference point
+  const handleApplyReference = useCallback(async (reference: { value: string; metric: string; name: string }) => {
+    try {
+      // Parse the reference value into a measurement
+      const parsed = await parseCompoundInput(
+        reference.value,
+        CompoundFormatType.HEIGHT
+      );
+      
+      if (parsed) {
+        setFromMeasurement(parsed);
+        
+        // Track the reference point usage in PostHog
+        trackReferencePointUsed(UnitCategoryId.LENGTH, reference.name);
+      }
+    } catch (error) {
+      console.error('Error applying reference:', error);
+      setError(error instanceof Error ? error.message : 'Unknown error applying reference');
+    }
+  }, []);
   
   // Determine if we're using imperial or metric
   const isMetric = heightFormat.fromFormat && heightFormat.fromFormat[0] === 'meter';
@@ -276,7 +337,7 @@ const FixedHeightConverter: React.FC<HeightConverterProps> = ({ onShowToast }) =
             <>
               <button
                 className="p-2 text-muted-foreground rounded-md hover:bg-muted hover:text-foreground transition-colors"
-                onClick={handleCopyResult}
+                onClick={handleCopyToClipboard}
                 title="Copy result"
               >
                 <Clipboard className="w-4 h-4" />

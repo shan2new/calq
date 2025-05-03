@@ -9,6 +9,14 @@ import {
   Search, ChevronRight
 } from 'lucide-react';
 import { debounce } from 'lodash-es';
+import { 
+  trackConversion, 
+  trackUnitChanged, 
+  trackCategoryChanged, 
+  trackFavoriteAdded, 
+  trackFavoriteRemoved, 
+  trackSwapUnits 
+} from '../lib/analytics';
 
 // Import new unit conversion system
 import { UnitCategoryId, unitCategoryInfo, UnitCategory, Unit, ConversionOptions } from '../lib/unit-types';
@@ -456,66 +464,63 @@ const Converter: React.FC<{
   const handleUnitSelect = (unitId: string, type: 'from' | 'to') => {
     if (type === 'from') {
       setFromUnit(unitId);
+      // Track the unit change
+      trackUnitChanged(selectedCategory, unitId, toUnit);
     } else {
       setToUnit(unitId);
+      // Track the unit change
+      trackUnitChanged(selectedCategory, fromUnit, unitId);
     }
   };
   
   // Handle swap units
   const handleSwapUnits = () => {
-    if (!fromUnit || !toUnit) return;
-    
-    // Animate swap button
-    if (swapButtonRef.current) {
-      swapButtonRef.current.classList.add('animate-rotate-swap');
+    // Only swap if both units are set
+    if (fromUnit && toUnit) {
+      const tempUnit = fromUnit;
+      const tempUnitData = fromUnitData;
       
-      // Force this operation to be synchronous by storing current values
-      const oldFromUnit = fromUnit;
-      const oldToUnit = toUnit;
-      const oldFromUnitData = fromUnitData;
-      const oldToUnitData = toUnitData;
+      setFromUnit(toUnit);
+      setFromUnitData(toUnitData);
       
-      // Directly swap the units in a single render batch
-      setFromUnit(oldToUnit);
-      setToUnit(oldFromUnit);
+      setToUnit(tempUnit);
+      setToUnitData(tempUnitData);
       
-      // Swap the unit data objects
-      if (oldFromUnitData && oldToUnitData) {
-        setFromUnitData(oldToUnitData);
-        setToUnitData(oldFromUnitData);
+      // Trigger conversion with the swapped units
+      convertValues(fromValue, toUnit, tempUnit);
+      
+      // Show success animation
+      if (swapButtonRef.current) {
+        swapButtonRef.current.classList.add('animate-button-pulse');
+        setTimeout(() => {
+          if (swapButtonRef.current) {
+            swapButtonRef.current.classList.remove('animate-button-pulse');
+          }
+        }, 500);
       }
       
-      // Update URL params
-      const params = new URLSearchParams(searchParams);
-      params.set('from', oldToUnit);
-      params.set('to', oldFromUnit);
-      setSearchParams(params);
-      
-      // Show success toast for better UX
-      showToast('Units swapped', 'success');
-      
-      // Remove animation class after delay
-      setTimeout(() => {
-        if (swapButtonRef.current) {
-          swapButtonRef.current.classList.remove('animate-rotate-swap');
-        }
-      }, 300);
+      // Track swap units action
+      trackSwapUnits(selectedCategory, fromUnit, toUnit);
     }
   };
   
   // Handle category change
   const handleCategoryChange = (categoryId: string) => {
-    setSelectedCategory(categoryId);
-    // Reset unit selections when category changes
-    setFromUnit('');
-    setToUnit('');
-    setFromUnitData(null);
-    setToUnitData(null);
-    setHasConverted(false);
-    setShowCategorySelection(false);
-    
-    // Show toast for better UX
-    showToast(`Changed to ${unitCategoryInfo[categoryId as UnitCategoryId]?.name || categoryId} category`, 'success');
+    if (categoryId !== selectedCategory) {
+      setSelectedCategory(categoryId);
+      setShowCategorySelection(false);
+      
+      // Clear units when changing category
+      setFromUnit('');
+      setToUnit('');
+      setFromUnitData(null);
+      setToUnitData(null);
+      setConvertedValue(null);
+      setFormattedConvertedValue('');
+      
+      // Track category change
+      trackCategoryChanged(categoryId);
+    }
   };
   
   // Get current category data
@@ -585,34 +590,42 @@ const Converter: React.FC<{
   }, [currentCategory, fromUnit, toUnit]);
   
   
-  // Add this function to handle toggling favorites
+  // Handle toggle favorite
   const handleToggleFavorite = () => {
-    if (!canSavePreset) return;
+    if (!hasConverted || convertedValue === null || !fromUnit || !toUnit) {
+      return;
+    }
     
-    try {
-      const parsedValue = parseFloat(fromValue);
-      if (fromUnit && toUnit && !isNaN(parsedValue) && convertedValue !== null) {
-        const record = {
-          id: `${selectedCategory}-${fromUnit}-${toUnit}-${parsedValue}`,
-          fromValue: parsedValue,
+    // Create a unique ID for this conversion
+    const conversionId = `${selectedCategory}-${fromUnit}-${toUnit}-${fromValue}`;
+    
+    if (isFavorite()) {
+      // Remove from favorites
+      removeFromFavorites(conversionId);
+      showToast('Removed from favorites', 'success');
+      
+      // Track favorite removal
+      trackFavoriteRemoved(selectedCategory, fromUnit, toUnit);
+    } else {
+      // Add to favorites
+      const numericValue = parseFloat(fromValue);
+      
+      if (!isNaN(numericValue)) {
+        addToFavorites({
+          id: conversionId,
           fromUnit,
+          fromValue: numericValue,
           toUnit,
           toValue: convertedValue,
           category: selectedCategory,
-          timestamp: Date.now(),
-        };
+          timestamp: Date.now()
+        });
         
-        if (isInFavorites(record.id)) {
-          removeFromFavorites(record.id);
-          showToast('Removed from favorites', 'success');
-        } else {
-          addToFavorites(record);
-          showToast('Added to favorites', 'success');
-        }
+        showToast('Added to favorites', 'success');
+        
+        // Track favorite addition
+        trackFavoriteAdded(selectedCategory, fromUnit, toUnit);
       }
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
-      showToast('Failed to update favorites', 'error');
     }
   };
   
@@ -812,6 +825,112 @@ const Converter: React.FC<{
     }
     
     return undefined;
+  };
+  
+  // Function to perform the conversion
+  const convertValues = async (
+    value: string, 
+    source: string, 
+    target: string
+  ) => {
+    // Validate the value
+    const numericValue = parseFloat(value);
+    
+    if (isNaN(numericValue)) {
+      setValidationError('Please enter a valid number');
+      setConvertedValue(null);
+      setFormattedConvertedValue('');
+      return;
+    }
+    
+    // Clear validation error
+    setValidationError(null);
+    
+    // Skip if no units are selected
+    if (!source || !target) {
+      return;
+    }
+    
+    // Skip if nothing has changed from the last conversion
+    if (
+      lastConversionRef.current &&
+      lastConversionRef.current.fromValue === numericValue &&
+      lastConversionRef.current.fromUnit === source &&
+      lastConversionRef.current.toUnit === target &&
+      lastConversionRef.current.category === selectedCategory
+    ) {
+      return;
+    }
+    
+    try {
+      // Show calculating state
+      setIsCalculating(true);
+      
+      // Perform the conversion
+      const result = await newConvert(
+        numericValue,
+        selectedCategory,
+        source,
+        target,
+        { format: true }
+      );
+      
+      // Set result in state
+      setConvertedValue(result.value);
+      setFormattedConvertedValue(result.formattedValue);
+      
+      // Update last conversion ref
+      lastConversionRef.current = {
+        fromValue: numericValue,
+        fromUnit: source,
+        toUnit: target,
+        category: selectedCategory
+      };
+      
+      // Add to history
+      addToHistory({
+        fromValue: numericValue,
+        fromUnit: source,
+        toUnit: target,
+        toValue: result.value,
+        category: selectedCategory
+      });
+      
+      // Update latest conversion ref
+      latestConversionRef.current = {
+        fromValue: numericValue,
+        fromUnit: source,
+        toUnit: target,
+        toValue: result.value,
+        category: selectedCategory
+      };
+      
+      // Show success animation briefly
+      setShowSuccessAnimation(true);
+      setTimeout(() => {
+        setShowSuccessAnimation(false);
+      }, 800);
+      
+      // Show that a conversion has been performed
+      setHasConverted(true);
+      
+      // Track conversion in PostHog
+      trackConversion(
+        selectedCategory,
+        source,
+        target,
+        numericValue,
+        result.value
+      );
+      
+    } catch (error) {
+      console.error('Conversion error:', error);
+      setValidationError('Conversion error. Please try again.');
+      setConvertedValue(null);
+      setFormattedConvertedValue('');
+    } finally {
+      setIsCalculating(false);
+    }
   };
   
   return (

@@ -2,6 +2,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useParam
 import { HelmetProvider } from 'react-helmet-async';
 import { ThemeProvider } from './contexts/ThemeProvider';
 import { UserProvider } from './contexts/UserContext';
+import { useEffect } from 'react';
+import posthog from 'posthog-js';
+import { trackPageView, trackSeoUrlConversion } from './lib/analytics';
 import './index.css';
 
 // Pages
@@ -17,24 +20,16 @@ import MetadataManager from './components/SEO/MetadataManager';
 // URL utilities
 import { parseCanonicalPath, buildCanonicalPath } from './lib/url-utils';
 
-// SEO-friendly route component
-const SEOConverterRoute = () => {
-  const params = useParams<{
-    category?: string;
-    fromUnit?: string;
-    toUnit?: string;
-    value?: string;
-  }>();
+// Page view tracker component
+const PageViewTracker = () => {
+  const location = useLocation();
   
-  return (
-    <ConverterWithSpecialized 
-      initialCategory={params.category}
-      initialFromUnit={params.fromUnit}
-      initialToUnit={params.toUnit}
-      initialValue={params.value ? Number(params.value) : undefined}
-      disableUrlUpdates={true} // Disable automatic URL updates to prevent loops
-    />
-  );
+  useEffect(() => {
+    // Track page view on route changes
+    trackPageView(location.pathname);
+  }, [location]);
+  
+  return null;
 };
 
 // Legacy route component - no redirects, just render the converter
@@ -53,6 +48,38 @@ const LegacyConverterRoute = () => {
   );
 };
 
+// SEO-friendly route component
+const SEOConverterRoute = () => {
+  const params = useParams<{
+    category?: string;
+    fromUnit?: string;
+    toUnit?: string;
+    value?: string;
+  }>();
+  
+  useEffect(() => {
+    // Track SEO URL conversions
+    if (params.category && params.fromUnit && params.toUnit) {
+      trackSeoUrlConversion(
+        params.category,
+        params.fromUnit,
+        params.toUnit,
+        params.value || ''
+      );
+    }
+  }, [params.category, params.fromUnit, params.toUnit, params.value]);
+  
+  return (
+    <ConverterWithSpecialized 
+      initialCategory={params.category}
+      initialFromUnit={params.fromUnit}
+      initialToUnit={params.toUnit}
+      initialValue={params.value ? Number(params.value) : undefined}
+      disableUrlUpdates={true} // Disable automatic URL updates to prevent loops
+    />
+  );
+};
+
 function App() {
   return (
     <HelmetProvider>
@@ -62,6 +89,9 @@ function App() {
             <Layout>
               {/* Base app metadata */}
               <MetadataManager />
+              
+              {/* Track page views */}
+              <PageViewTracker />
               
               <Routes>
                 <Route path="/" element={<Home />} />

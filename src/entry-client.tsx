@@ -12,6 +12,7 @@ import { FavoritesProvider } from './contexts/FavoritesContext';
 import { PresetsProvider } from './contexts/PresetsContext';
 import { UserProvider } from './contexts/UserContext';
 import { Analytics } from "@vercel/analytics/react";
+import { PostHogProvider } from 'posthog-js/react';
 import { registerServiceWorker } from './registerSW';
 import { initializeUserPreferences } from './lib/user-preferences';
 import { preloadFrequentConversionData } from './lib/indexedDB';
@@ -69,22 +70,30 @@ if (root) {
   ReactDOM.hydrateRoot(
     root,
     <React.StrictMode>
-      <HelmetProvider>
-        <ThemeProvider>
-          <UserProvider>
-            <HistoryProvider>
-              <FavoritesProvider>
-                <PresetsProvider>
-                  <BrowserRouter>
-                    <App />
-                    <Analytics />
-                  </BrowserRouter>
-                </PresetsProvider>
-              </FavoritesProvider>
-            </HistoryProvider>
-          </UserProvider>
-        </ThemeProvider>
-      </HelmetProvider>
+      <PostHogProvider
+        apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_KEY}
+        options={{
+          api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+          debug: import.meta.env.MODE === 'development',
+        }}
+      >
+        <HelmetProvider>
+          <ThemeProvider>
+            <UserProvider>
+              <HistoryProvider>
+                <FavoritesProvider>
+                  <PresetsProvider>
+                    <BrowserRouter>
+                      <App />
+                      <Analytics />
+                    </BrowserRouter>
+                  </PresetsProvider>
+                </FavoritesProvider>
+              </HistoryProvider>
+            </UserProvider>
+          </ThemeProvider>
+        </HelmetProvider>
+      </PostHogProvider>
     </React.StrictMode>
   );
-} 
+}

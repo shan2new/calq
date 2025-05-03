@@ -6,6 +6,7 @@ import CookingConverter from './CookingConverter';
 import Toast, { ToastType } from '../Toast';
 import { Ruler, Utensils, Gauge } from 'lucide-react';
 import { UnitCategoryId } from '../../lib/unit-types';
+import { trackCategoryChanged } from '../../lib/analytics';
 
 interface SpecializedConverterContainerProps {
   initialCategory?: UnitCategoryId;
@@ -50,6 +51,21 @@ const SpecializedConverterContainer: React.FC<SpecializedConverterContainerProps
   // Handle tab change
   const handleTabChange = useCallback((converterType: CompoundFormatType) => {
     setActiveConverter(converterType);
+    
+    // Track category change in PostHog
+    let categoryName = '';
+    switch (converterType) {
+      case CompoundFormatType.HEIGHT:
+        categoryName = UnitCategoryId.LENGTH;
+        break;
+      case CompoundFormatType.COOKING:
+        categoryName = UnitCategoryId.VOLUME;
+        break;
+      default:
+        categoryName = 'unknown';
+    }
+    
+    trackCategoryChanged(categoryName);
   }, []);
   
   // Get tab button class based on active state

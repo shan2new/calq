@@ -9,7 +9,8 @@ import { FavoritesProvider } from './contexts/FavoritesContext';
 import { PresetsProvider } from './contexts/PresetsContext';
 import { initializeUserPreferences } from './lib/user-preferences';
 import { preloadFrequentConversionData } from './lib/indexedDB';
-import { Analytics } from "@vercel/analytics/react"
+import { Analytics } from '@vercel/analytics/react';
+import { PostHogProvider } from 'posthog-js/react';
 
 // Initialize user preferences
 initializeUserPreferences();
@@ -57,15 +58,23 @@ if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ThemeProvider>
-      <HistoryProvider>
-        <FavoritesProvider>
-          <PresetsProvider>
-            <App />
-            <Analytics />
-          </PresetsProvider>
-        </FavoritesProvider>
-      </HistoryProvider>
-    </ThemeProvider>
+    <PostHogProvider
+      apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_KEY}
+      options={{
+        api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+        debug: import.meta.env.MODE === 'development',
+      }}
+    >
+      <ThemeProvider>
+        <HistoryProvider>
+          <FavoritesProvider>
+            <PresetsProvider>
+              <App />
+              <Analytics />
+            </PresetsProvider>
+          </FavoritesProvider>
+        </HistoryProvider>
+      </ThemeProvider>
+    </PostHogProvider>
   </React.StrictMode>,
-); 
+);

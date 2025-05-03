@@ -7,6 +7,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs'
 import { Switch } from '../components/ui/switch';
 import { Label } from '../components/ui/label';
 import SpecializedConverterContainer from '../components/converter/SpecializedConverterContainer';
+import { trackCategoryChanged } from '../lib/analytics';
 
 // Import the original Converter for backward compatibility
 import OriginalConverter from './Converter';
@@ -73,6 +74,9 @@ const ConverterWithSpecialized: React.FC<ConverterProps> = ({
   // Handle tab change
   const handleTabChange = (value: string) => {
     setActiveTab(value as 'standard' | 'specialized');
+    
+    // Track tab change as category change
+    trackCategoryChanged(`converter_mode_${value}`);
   };
   
   // Toggle specialized converter visibility
@@ -90,6 +94,9 @@ const ConverterWithSpecialized: React.FC<ConverterProps> = ({
           defaultCompoundPreferences.recentCompoundConversions
       }
     });
+    
+    // Track specialized format change
+    trackCategoryChanged(`${formatType}_${enabled ? 'enabled' : 'disabled'}`);
   };
   
   // Determine if each format is enabled
