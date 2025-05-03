@@ -83,4 +83,29 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    // Enable SSR build
+    ssrManifest: true,
+    // Output directory for client build
+    outDir: 'dist/client',
+    // Manual chunks for better code splitting
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui-components': ['lucide-react', 'clsx', 'tailwind-merge', 'class-variance-authority'],
+          'conversion-engine': ['./src/lib/conversion-engine.ts', './src/lib/unit-types.ts']
+        }
+      }
+    }
+  },
+  // Configuration for SSR entry points
+  ssr: {
+    // Explicitly mark dependencies as external to avoid bundling
+    noExternal: [
+      // Include dependencies that must be processed
+      /^react-helmet-async/,
+      /^@vercel\/analytics/
+    ]
+  }
 })

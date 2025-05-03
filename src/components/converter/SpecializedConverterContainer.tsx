@@ -1,22 +1,41 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { CompoundFormatType } from '../../lib/compound-unit-types';
 import { useUser } from '../../contexts/UserContext';
 import FixedHeightConverter from './FixedHeightConverter';
 import CookingConverter from './CookingConverter';
 import Toast, { ToastType } from '../Toast';
 import { Ruler, Utensils, Gauge } from 'lucide-react';
+import { UnitCategoryId } from '../../lib/unit-types';
 
 interface SpecializedConverterContainerProps {
-  // Any props needed for the container
+  initialCategory?: UnitCategoryId;
 }
 
-const SpecializedConverterContainer: React.FC<SpecializedConverterContainerProps> = () => {
+const SpecializedConverterContainer: React.FC<SpecializedConverterContainerProps> = ({
+  initialCategory
+}) => {
   // State for active converter and toasts
   const [activeConverter, setActiveConverter] = useState<CompoundFormatType>(CompoundFormatType.HEIGHT);
   const [toastQueue, setToastQueue] = useState<{ message: string; type: ToastType }[]>([]);
   
   // User preferences
   const { userPreferences, getPreferredCompoundFormat } = useUser();
+  
+  // Set active converter based on initialCategory if provided
+  useEffect(() => {
+    if (initialCategory) {
+      // Map category to converter type
+      switch (initialCategory) {
+        case UnitCategoryId.LENGTH:
+          setActiveConverter(CompoundFormatType.HEIGHT);
+          break;
+        case UnitCategoryId.VOLUME:
+          setActiveConverter(CompoundFormatType.COOKING);
+          break;
+        // Add more mappings as needed
+      }
+    }
+  }, [initialCategory]);
   
   // Function to show a toast notification
   const showToast = useCallback((message: string, type: ToastType = 'info') => {

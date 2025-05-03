@@ -104,7 +104,17 @@ const ConverterSkeleton = () => (
   </div>
 );
 
-const Converter: React.FC = () => {
+const Converter: React.FC<{
+  initialCategory?: string;
+  initialFromUnit?: string;
+  initialToUnit?: string;
+  initialValue?: number;
+}> = ({
+  initialCategory,
+  initialFromUnit,
+  initialToUnit,
+  initialValue
+}) => {
   // Use the navigate hook for deep-linking using history.replaceState
   const navigate = useNavigate();
   
@@ -131,13 +141,13 @@ const Converter: React.FC = () => {
     category: string;
   } | null>(null);
   
-  // Get category from URL
-  const categoryParam = searchParams.get('category') || UnitCategoryId.LENGTH;
+  // Get category from URL or props
+  const categoryParam = initialCategory || searchParams.get('category') || UnitCategoryId.LENGTH;
   
   const [selectedCategory, setSelectedCategory] = useState(categoryParam);
-  const [fromUnit, setFromUnit] = useState('');
-  const [toUnit, setToUnit] = useState('');
-  const [fromValue, setFromValue] = useState<string>('1');
+  const [fromUnit, setFromUnit] = useState(initialFromUnit || '');
+  const [toUnit, setToUnit] = useState(initialToUnit || '');
+  const [fromValue, setFromValue] = useState<string>(initialValue?.toString() || '1');
   const [convertedValue, setConvertedValue] = useState<number | null>(null);
   const [formattedConvertedValue, setFormattedConvertedValue] = useState<string>('');
   const [isAddingPreset, setIsAddingPreset] = useState(false);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 import { UnitCategoryId } from '../lib/unit-types';
 import { CompoundFormatType, defaultCompoundPreferences } from '../lib/compound-unit-types';
@@ -11,21 +11,62 @@ import SpecializedConverterContainer from '../components/converter/SpecializedCo
 // Import the original Converter for backward compatibility
 import OriginalConverter from './Converter';
 
-const ConverterWithSpecialized: React.FC = () => {
+// Import SEO components
+import MetadataManager from '../components/SEO/MetadataManager';
+import { parseCanonicalPath, buildCanonicalPath } from '../lib/url-utils';
+
+interface ConverterProps {
+  initialCategory?: string;
+  initialFromUnit?: string;
+  initialToUnit?: string;
+  initialValue?: number;
+  disableUrlUpdates?: boolean;
+  useLegacyUrlFormat?: boolean;
+}
+
+const ConverterWithSpecialized: React.FC<ConverterProps> = ({
+  initialCategory,
+  initialFromUnit,
+  initialToUnit,
+  initialValue,
+  disableUrlUpdates = false,
+  useLegacyUrlFormat = false
+}) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { userPreferences, updatePreferences } = useUser();
+  const location = useLocation();
+  
+  // Extract parameters for SEO metadata from the URL
+  const seoParams = React.useMemo(() => {
+    if (location.pathname.startsWith('/convert/')) {
+      return parseCanonicalPath(location.pathname);
+    } else {
+      return {
+        category: searchParams.get('category') || initialCategory || undefined,
+        fromUnit: searchParams.get('from') || initialFromUnit || undefined,
+        toUnit: searchParams.get('to') || initialToUnit || undefined,
+        value: searchParams.get('value') ? Number(searchParams.get('value')) : initialValue
+      };
+    }
+  }, [location.pathname, searchParams, initialCategory, initialFromUnit, initialToUnit, initialValue]);
   
   // Determine active tab from URL or defaults
   const [activeTab, setActiveTab] = useState<'standard' | 'specialized'>(
     searchParams.get('mode') === 'specialized' ? 'specialized' : 'standard'
   );
   
-  // Update URL when tab changes
+  // Update URL when tab changes - only if not disabled
   useEffect(() => {
+    // Skip URL updates if disabled or using SEO format
+    if (disableUrlUpdates || location.pathname.startsWith('/convert/')) {
+      return;
+    }
+    
+    // Otherwise update the search params
     const newParams = new URLSearchParams(searchParams);
     newParams.set('mode', activeTab);
     setSearchParams(newParams, { replace: true });
-  }, [activeTab, searchParams, setSearchParams]);
+  }, [activeTab, searchParams, setSearchParams, location.pathname, disableUrlUpdates]);
   
   // Handle tab change
   const handleTabChange = (value: string) => {
@@ -53,8 +94,32 @@ const ConverterWithSpecialized: React.FC = () => {
   const isHeightEnabled = userPreferences.compoundPreferences.preferredFormats[CompoundFormatType.HEIGHT]?.enabled ?? true;
   const isCookingEnabled = userPreferences.compoundPreferences.preferredFormats[CompoundFormatType.COOKING]?.enabled ?? true;
   
+  // Create SEO metadata based on URL parameters
+  const seoTitle = seoParams?.fromUnit && seoParams?.toUnit && seoParams?.category
+    ? `Convert ${seoParams.fromUnit} to ${seoParams.toUnit} | ${seoParams.category} Converter | Calcq`
+    : 'Unit Converter | Calcq';
+  
+  const seoDescription = seoParams?.fromUnit && seoParams?.toUnit && seoParams?.category
+    ? `Convert ${seoParams?.value || ''} ${seoParams.fromUnit} to ${seoParams.toUnit} with Calcq's ${seoParams.category} converter. Instant, accurate calculations.`
+    : 'Convert between 4,500+ units across 33 categories with Calcq. Fast, accurate, and user-friendly.';
+  
+  const canonicalPath = seoParams?.fromUnit && seoParams?.toUnit && seoParams?.category
+    ? buildCanonicalPath(seoParams.category, seoParams.fromUnit, seoParams.toUnit, seoParams.value)
+    : null;
+  
   return (
     <div className="container mx-auto max-w-3xl">
+      {/* SEO Metadata */}
+      <MetadataManager 
+        title={seoTitle}
+        description={seoDescription}
+        canonicalPath={canonicalPath || undefined}
+        fromUnit={seoParams?.fromUnit}
+        toUnit={seoParams?.toUnit}
+        category={seoParams?.category}
+        value={seoParams?.value}
+      />
+      
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <div className="flex justify-center w-full">
           <TabsList className="w-full max-w-md">
@@ -64,7 +129,12 @@ const ConverterWithSpecialized: React.FC = () => {
         </div>
         
         <TabsContent value="standard" className="mt-2">
-          <OriginalConverter />
+          <OriginalConverter 
+            initialCategory={initialCategory}
+            initialFromUnit={initialFromUnit}
+            initialToUnit={initialToUnit}
+            initialValue={initialValue}
+          />
         </TabsContent>
         
         <TabsContent value="specialized" className="mt-2">
@@ -103,7 +173,9 @@ const ConverterWithSpecialized: React.FC = () => {
           </div>
           
           {/* Specialized converter container */}
-          <SpecializedConverterContainer />
+          <SpecializedConverterContainer 
+            initialCategory={initialCategory as UnitCategoryId}
+          />
         </TabsContent>
       </Tabs>
     </div>

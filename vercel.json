@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "framework": null,
+  "functions": {
+    "api/ssr.js": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/api/ssr.js" }
+  ],
+  "buildCommand": "npm run build:ssr"
+} 
