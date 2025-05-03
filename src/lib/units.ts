@@ -364,4 +364,86 @@ export const convert = (
   // Convert from source unit to base unit, then from base unit to target unit
   const baseValue = fromUnit.toBase(value);
   return toUnit.fromBase(baseValue);
+};
+
+/**
+ * Format a number based on unit category and magnitude
+ * Provides context-aware formatting that makes sense for the specific unit type
+ * 
+ * @param value The number to format
+ * @param categoryId The category of units being displayed
+ * @returns Formatted string representation of the number
+ */
+export const formatNumberByCategory = (value: number, categoryId: string): string => {
+  if (value === undefined || value === null || isNaN(value)) return '-';
+  
+  // Default formatter for standard numerical display
+  const getDefaultPrecision = (val: number): string => {
+    // Show more decimals for small numbers, fewer for large numbers
+    if (Math.abs(val) < 0.0001) return val.toExponential(4);
+    if (Math.abs(val) < 0.001) return val.toFixed(6);
+    if (Math.abs(val) < 0.01) return val.toFixed(5);
+    if (Math.abs(val) < 0.1) return val.toFixed(4);
+    if (Math.abs(val) < 1) return val.toFixed(3);
+    if (Math.abs(val) < 10) return val.toFixed(2);
+    if (Math.abs(val) < 100) return val.toFixed(1);
+    return val.toFixed(0);
+  };
+  
+  // Format the number with thousands separators
+  const formatWithSeparators = (formattedValue: string): string => {
+    const parts = formattedValue.split('.');
+    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return parts.length > 1 ? `${integerPart}.${parts[1]}` : integerPart;
+  };
+
+  // Category-specific formatting
+  switch (categoryId) {
+    case 'temperature':
+      // Temperature usually shown with 1 decimal place
+      return formatWithSeparators(value.toFixed(1));
+      
+    case 'time':
+      // For time, display human-readable format for large values
+      if (value >= 86400) { // More than a day
+        const days = Math.floor(value / 86400);
+        const hours = Math.floor((value % 86400) / 3600);
+        return `${days}d ${hours}h`;
+      } else if (value >= 3600) { // More than an hour
+        const hours = Math.floor(value / 3600);
+        const minutes = Math.floor((value % 3600) / 60);
+        return `${hours}h ${minutes}m`;
+      } else if (value >= 60) { // More than a minute
+        const minutes = Math.floor(value / 60);
+        const seconds = Math.floor(value % 60);
+        return `${minutes}m ${seconds}s`;
+      } else if (value >= 1) { // More than a second
+        return value.toFixed(2) + 's';
+      }
+      // Milliseconds range
+      return (value * 1000).toFixed(0) + 'ms';
+      
+    case 'data':
+      // For data sizes (bytes, KB, MB, etc.)
+      const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+      let size = Math.abs(value);
+      let i = 0;
+      while (size >= 1024 && i < units.length - 1) {
+        size /= 1024;
+        i++;
+      }
+      return `${value < 0 ? '-' : ''}${size.toFixed(i > 0 ? 2 : 0)} ${units[i]}`;
+      
+    case 'currency':
+      // For currency, always show 2 decimal places
+      return formatWithSeparators(value.toFixed(2));
+      
+    case 'angle':
+      // For angles, show different precision based on unit type
+      return formatWithSeparators(value.toFixed(2)) + '°';
+      
+    default:
+      // Use the default formatter for other categories
+      return formatWithSeparators(getDefaultPrecision(value));
+  }
 }; 

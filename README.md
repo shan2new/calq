@@ -1,123 +1,100 @@
-# Unit Converter PWA
+# Calcq - Modern Unit Converter
 
-A modern, feature-rich unit conversion Progressive Web App (PWA) built with React, Tailwind CSS v4, and shadcn/ui. This application allows users to convert between 4,500+ units across 33 categories with a beautiful, responsive UI that works online and offline.
+A clean, fast, and user-friendly unit converter built with React, TypeScript, and Tailwind CSS. Designed to handle 4,500+ units across 33 categories while maintaining optimal performance and a clean interface.
 
 ## Features
 
-- **Comprehensive Unit Library**: Convert between thousands of units across multiple categories
-- **Persistent History**: Automatically saves your conversion history for quick reference
-- **Favorites System**: Save your most-used conversions for quick access
-- **Custom Presets**: Create and manage custom conversion presets
-- **CSV Export**: Export your conversion history in CSV format for use in spreadsheets
-- **Offline Support**: Full functionality even without an internet connection
-- **Responsive Design**: Works seamlessly on mobile, tablet, and desktop devices
-- **Dark/Light Mode**: Adaptive themes that respect system preferences
-- **Accessibility**: Built with a11y in mind, including proper semantic HTML and ARIA attributes
+### Core Functionality
+- Convert between 4,500+ units across 33 categories
+- Hierarchical unit browsing with subcategories
+- Efficient search algorithm with typeahead suggestions
+- Clean, accessible, and responsive interface
+- Dark/light mode support
+- PWA support for offline usage
 
-## Tech Stack
+### Smart Features
+- **Normalized Data Store**: Optimized data structure for minimal redundancy and fast lookups
+- **Lazy Loading**: Dynamic loading of unit data by category for optimal bundle size
+- **Intelligent Number Formatting**: Format values differently based on unit type (time, temperature, etc.)
+- **Relationship Indicators**: Visual indicators showing related unit types
+- **Smart Search**: Fast, efficient unit discovery with typeahead functionality
+- **Quick Access**: Recently used and recommended conversions 
 
-- React with TypeScript
-- Tailwind CSS v4 for styling
-- shadcn/ui component library
-- React Router for navigation
-- Progressive Web App (PWA) capabilities
-- Local Storage for data persistence
-- Context API for state management
+### Performance Optimizations
+- Initial bundle size kept small despite large dataset
+- Sub-100ms response time for common conversions
+- Optimized IndexedDB schema for quick lookups
+- Background calculation for recommendations using requestIdleCallback
+- Category-based code splitting for faster initial load
+
+## Project Structure
+
+The project is organized with a clear separation of concerns:
+
+```
+src/
+  ├── components/       # UI components
+  ├── contexts/         # React context providers
+  ├── lib/              # Core business logic
+  │   ├── unit-data/    # Unit definitions by category
+  │   ├── unit-types.ts # Type definitions
+  │   ├── unit-loader.ts # Lazy loading system
+  │   ├── unit-search.ts # Search functionality
+  │   └── conversion-engine.ts # Conversion logic
+  ├── pages/            # Application pages
+  └── styles/           # Global styles
+```
+
+## Unit System
+
+The unit system is designed for comprehensive coverage while maintaining efficient performance:
+
+- **Hierarchical Organization**: Units are grouped into categories and subcategories
+- **Normalized Data**: Each unit contains precise conversion functions
+- **Extensible Architecture**: Easy to add new units and categories
+- **Optimized Loading**: Units are loaded on-demand to minimize initial load time
 
 ## Getting Started
 
 ### Prerequisites
-
-- Node.js v22+
-- npm or yarn
+- Node.js 18+ and npm/yarn
 
 ### Installation
-
-1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/unit-converter.git
-cd unit-converter
-```
+# Clone the repository
+git clone https://github.com/your-username/calcq.git
+cd calcq
 
-2. Install dependencies
-```bash
+# Install dependencies
 npm install
-```
 
-3. Start the development server
-```bash
+# Start development server
 npm run dev
 ```
 
-4. Open [http://localhost:5173](http://localhost:5173) in your browser
-
-### Building for Production
-
+### Build for Production
 ```bash
 npm run build
 ```
 
-The build artifacts will be stored in the `dist/` directory.
-
-## Project Structure
-
-```
-unit-converter/
-├── public/                # Static assets and PWA manifest
-├── src/
-│   ├── assets/            # Images and static resources
-│   ├── components/        # Reusable UI components
-│   ├── contexts/          # React Context providers
-│   ├── hooks/             # Custom React hooks
-│   ├── lib/               # Utility functions and constants
-│   ├── pages/             # Page components
-│   ├── styles/            # Global styles and Tailwind config
-│   ├── App.tsx            # Main App component with routing
-│   ├── main.tsx           # Application entry point
-│   └── registerSW.ts      # Service Worker registration
-├── index.html             # HTML entry point
-├── tailwind.config.js     # Tailwind CSS configuration
-├── tsconfig.json          # TypeScript configuration
-├── vite.config.ts         # Vite configuration
-└── README.md              # Project documentation
-```
-
-## Theming
-
-The application uses CSS variables for theming, with support for light, dark, and system preference modes. You can customize the theme by modifying the CSS variables in `src/styles/index.css`.
-
-### Theme Variables
-
-```css
-:root {
-  --background: 0 0% 100%;
-  --foreground: 224 71.4% 4.1%;
-  --primary: 262.1 83.3% 57.8%;
-  --primary-foreground: 210 20% 98%;
-  /* ... more variables ... */
-}
-
-[data-theme="dark"] {
-  --background: 224 71.4% 4.1%;
-  --foreground: 210 20% 98%;
-  /* ... more variables ... */
-}
-```
-
-## Accessibility
-
-The application is built with accessibility in mind:
-
-- Semantic HTML structure
-- Proper ARIA roles and attributes
-- Keyboard navigation support
-- Color contrast that meets WCAG guidelines
-- Screen reader friendly components
-
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+### Adding Units
+See the [Unit Data README](src/lib/unit-data/README.md) for detailed instructions on adding new units or categories.
+
+### Development
+1. Fork the repository
+2. Create your feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add some amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
 
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Unit conversion data validated against authoritative sources (NIST, BIPM)
+- Icons from [Lucide](https://lucide.dev/)
+- UI components powered by [shadcn/ui](https://ui.shadcn.com/)

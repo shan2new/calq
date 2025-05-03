@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -57,7 +57,7 @@
     }
 
     html {
-        font-family: 'Inter', sans-serif;
+        font-family: 'Inter Tight', sans-serif;
     }
 
     body {
@@ -90,6 +90,154 @@
 
     .mobile-bottom-nav-padding {
         padding-bottom: calc(env(safe-area-inset-bottom) + 4rem);
+    }
+
+    /* Button tap effects */
+    button, a {
+        @apply transition-all duration-150 ease-in-out;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    button:active:not(:disabled), 
+    a:active {
+        @apply scale-95 bg-blend-color-burn;
+    }
+
+    /* Page transitions */
+    .page-transition-enter {
+        opacity: 0;
+        transform: translate3d(0, 15px, 0);
+    }
+    
+    .page-transition-enter-active {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+        transition: opacity 200ms ease-out, transform 200ms ease-out;
+    }
+    
+    .page-transition-exit {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+    
+    .page-transition-exit-active {
+        opacity: 0;
+        transform: translate3d(0, -15px, 0);
+        transition: opacity 200ms ease-in, transform 200ms ease-in;
+    }
+
+    /* Brand logo custom q */
+    .logo-text {
+        @apply text-4xl font-black;
+        letter-spacing: -0.02em;
+    }
+
+    .logo-text .letter-q {
+        position: relative;
+        display: inline-block;
+    }
+
+    .logo-text .letter-q::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: currentColor;
+        animation: pulse 2s infinite;
+    }
+
+    /* Subtle animation for the q dot */
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.1); opacity: 0.8; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Ripple effect */
+    .ripple {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .ripple::after {
+        content: "";
+        display: block;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+        background-image: radial-gradient(circle, currentColor 10%, transparent 10.01%);
+        background-repeat: no-repeat;
+        background-position: 50%;
+        transform: scale(10, 10);
+        opacity: 0;
+        transition: transform 0.5s, opacity 0.8s;
+    }
+
+    .ripple:active::after {
+        transform: scale(0, 0);
+        opacity: 0.3;
+        transition: 0s;
+    }
+
+    /* Accordion animations */
+    .accordion-enter {
+        max-height: 0;
+        overflow: hidden;
+    }
+    
+    .accordion-enter-active {
+        max-height: 500px;
+        transition: max-height 300ms ease-in-out;
+        overflow: hidden;
+    }
+    
+    .accordion-exit {
+        max-height: 500px;
+        overflow: hidden;
+    }
+    
+    .accordion-exit-active {
+        max-height: 0;
+        transition: max-height 300ms ease-in-out;
+        overflow: hidden;
+    }
+
+    /* Toast animations */
+    .toast-enter {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    
+    .toast-enter-active {
+        opacity: 1;
+        transform: translateY(0);
+        transition: opacity 300ms, transform 300ms;
+    }
+    
+    .toast-exit {
+        opacity: 1;
+    }
+    
+    .toast-exit-active {
+        opacity: 0;
+        transform: translateY(-20px);
+        transition: opacity 300ms, transform 300ms;
+    }
+
+    /* Add sliding animation for use with toasts and notifications */
+    @keyframes slide-down {
+        0% { opacity: 0; transform: translateY(-20px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-slide-down {
+        animation: slide-down 300ms ease-out forwards;
     }
 }
 
@@ -208,5 +356,10 @@
 
     body {
         @apply bg-background text-foreground;
+    }
+
+    /* Focus styles for accessibility */
+    :focus-visible {
+        @apply outline-2 outline-offset-2 outline-primary/50 rounded-sm;
     }
 }
