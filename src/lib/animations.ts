@@ -73,7 +73,6 @@ export const bounceElement = (
 ): Promise<void> => {
   const originalTransform = element.style.transform;
   const [initial, overshoot, settle] = timings.bounce;
-  const totalDuration = initial + overshoot + settle;
   
   return new Promise((resolve) => {
     // Initial expansion

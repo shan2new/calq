@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import { useTheme } from '../contexts/ThemeProvider';
 import { Sun, Moon, Home, Settings, History, Calculator, Search, Star, Clock, RefreshCw } from 'lucide-react';
 import { unitCategories, formatNumberByCategory } from '../lib/units';
@@ -82,9 +81,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [recentConversions, setRecentConversions] = useState<ConversionRecord[]>([]);
   const [recommendations, setRecommendations] = useState<RecommendedConversion[]>([]);
   const [isLoadingQuickAccess, setIsLoadingQuickAccess] = useState(true);
-  
-  // Add nodeRef for transition
-  const nodeRef = useRef(null);
   
   const isActive = (path: string) => location.pathname === path;
 
@@ -486,20 +482,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         )}
       </div>
       
-      {/* Main content with page transitions */}
+      {/* Main content - simplified without transitions */}
       <main className="flex-1 p-4 md:p-6 overflow-auto pb-20 md:pb-6" id="main-content" role="main">
-        <TransitionGroup component={null}>
-          <CSSTransition 
-            key={location.pathname} 
-            classNames="page-transition" 
-            timeout={200}
-            nodeRef={nodeRef}
-          >
-            <div ref={nodeRef}>
-              {children}
-            </div>
-          </CSSTransition>
-        </TransitionGroup>
+        {children}
       </main>
       
       {/* Mobile navigation */}

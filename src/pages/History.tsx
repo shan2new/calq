@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useHistory } from '../contexts/HistoryContext';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { unitCategories } from '../lib/units';
-import { Star, Trash, Download, Calculator, ChevronUp, RefreshCw, Info } from 'lucide-react';
+import { Star, Trash, Download, Calculator, ChevronUp } from 'lucide-react';
 import HistorySkeleton from '../components/HistorySkeleton';
 
 interface SwipeableItemProps {

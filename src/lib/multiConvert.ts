@@ -1,4 +1,4 @@
-import { convert, getUnitById } from './units';
+import { convert } from './units';
 
 // Defining types for multi-conversion operations
 export interface MultiConversionItem {

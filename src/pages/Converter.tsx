@@ -1,13 +1,12 @@
-import React, { createRef, useState, useEffect, useRef, useMemo, useCallback, Suspense } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { unitCategories, convert, formatNumberByCategory } from '../lib/units';
+import { unitCategories, formatNumberByCategory } from '../lib/units';
 import { useHistory } from '../contexts/HistoryContext';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { usePresets } from '../contexts/PresetsContext';
 import { 
-  ArrowUpDown, Star, MoveRight, X, CheckCircle, 
-  AlertCircle, Save, Plus, Search, SlidersHorizontal, 
-  Settings, ArrowRightLeft, RefreshCw
+  X, 
+  Search, ChevronRight
 } from 'lucide-react';
 import { debounce } from 'lodash-es';
 
@@ -16,36 +15,19 @@ import { UnitCategoryId, unitCategoryInfo, UnitCategory, Unit, ConversionOptions
 import { loadUnitCategory, initializeEssentialCategories, preloadCategories, isCategoryLoaded } from '../lib/unit-loader';
 import { convert as newConvert, getCompatibleUnits, getPopularUnits } from '../lib/conversion-engine';
 import { searchUnits } from '../lib/unit-search';
+import { QuickAccessItem } from '../lib/indexedDB';
 
-interface ToastProps {
-  message: string;
-  type: 'success' | 'error';
-  onClose: () => void;
-}
+// Import the new components
+import QuickAccessChips from '../components/QuickAccessChips';
+import ExpressionInput from '../components/ExpressionInput';
+import ConversionResult from '../components/ConversionResult';
+import RelationshipIndicator from '../components/RelationshipIndicator';
+import UnitSelector from '../components/UnitSelector';
+import ConverterActions from '../components/ConverterActions';
+import UnitInformation from '../components/UnitInformation';
+import CategorySelector from '../components/CategorySelector';
+import Toast, { ToastType } from '../components/Toast';
 
-const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onClose();
-    }, 3000);
-    
-    return () => clearTimeout(timer);
-  }, [onClose]);
-  
-  return (
-    <div className="fixed top-6 left-1/2 transform -translate-x-1/2 py-2 px-4 rounded-md shadow-md flex items-center gap-2 z-50 bg-card border border-border animate-slide-down">
-      {type === 'success' ? <CheckCircle className="w-4 h-4 text-green-500" /> : <AlertCircle className="w-4 h-4 text-red-500" />}
-      <p className="text-sm font-medium">{message}</p>
-      <button 
-        onClick={onClose} 
-        className="ml-2 text-muted-foreground hover:text-foreground ripple"
-        aria-label="Close notification"
-      >
-        <X className="w-4 h-4" />
-      </button>
-    </div>
-  );
-};
 
 // SVG Animation for successful conversion
 const SuccessfulConversionAnimation = ({ isVisible }: { isVisible: boolean }) => {
@@ -129,27 +111,20 @@ const Converter: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { addToHistory } = useHistory();
   const { addToFavorites, isInFavorites, removeFromFavorites } = useFavorites();
-  const { presets, addPreset } = usePresets();
+  const { addPreset } = usePresets();
   
   // Refs for input focus and conversion tracking
-  const fromValueInputRef = useRef<HTMLInputElement>(null);
   const lastConversionRef = useRef<{
     fromValue: number;
     fromUnit: string;
     toUnit: string;
     category: string;
   } | null>(null);
-  const validationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const swapButtonRef = useRef<HTMLButtonElement>(null);
-  const favoriteButtonRef = useRef<HTMLButtonElement>(null);
   const fabRef = useRef<HTMLButtonElement>(null);
   
-  // Get category and search params from URL
+  // Get category from URL
   const categoryParam = searchParams.get('category') || UnitCategoryId.LENGTH;
-  const searchQuery = searchParams.get('search') || '';
-  const valueFromUrl = searchParams.get('value') || '';
-  const fromUnitFromUrl = searchParams.get('from') || '';
-  const toUnitFromUrl = searchParams.get('to') || '';
   
   const [selectedCategory, setSelectedCategory] = useState(categoryParam);
   const [fromUnit, setFromUnit] = useState('');
@@ -159,21 +134,17 @@ const Converter: React.FC = () => {
   const [formattedConvertedValue, setFormattedConvertedValue] = useState<string>('');
   const [isAddingPreset, setIsAddingPreset] = useState(false);
   const [presetName, setPresetName] = useState('');
-  const [isSwapping, setIsSwapping] = useState(false);
-  const [swapColor, setSwapColor] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const [toastQueue, setToastQueue] = useState<{ message: string; type: ToastType }[]>([]);
   const [hasConverted, setHasConverted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [categoryLoading, setCategoryLoading] = useState(false);
-  const [fabVisible, setFabVisible] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
-  const [conversionCount, setConversionCount] = useState(0);
+  const [validationError, setValidationError] = useState<string | null>(null);
   
   // New state variables for the enhanced system
   const [categoryData, setCategoryData] = useState<UnitCategory | null>(null);
-  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  const [availableCategories] = useState<string[]>([]);
   const [fromUnitData, setFromUnitData] = useState<Unit | null>(null);
   const [toUnitData, setToUnitData] = useState<Unit | null>(null);
   const [compatibleUnits, setCompatibleUnits] = useState<Unit[]>([]);
@@ -181,16 +152,20 @@ const Converter: React.FC = () => {
   const [searchResults, setSearchResults] = useState<{ unitId: string; name: string; symbol: string; categoryId: string; }[]>([]);
   const [showSearch, setShowSearch] = useState(false);
   const [searchInput, setSearchInput] = useState('');
-  const [conversionOptions, setConversionOptions] = useState<ConversionOptions>({
+  const [conversionOptions] = useState<ConversionOptions>({
     precision: undefined,
     format: true,
   });
   
+  // New state variables for enhanced UX
+  const [showCategorySelection, setShowCategorySelection] = useState(false);
+  const [showFirstTimeTooltips, setShowFirstTimeTooltips] = useState(() => {
+    const hasSeenTooltips = localStorage.getItem('calcq_seen_tooltips');
+    return !hasSeenTooltips;
+  });
+  
   // Determine if preset can be saved
   const canSavePreset = hasConverted && convertedValue !== null && fromUnit !== '' && toUnit !== '';
-  
-  // Show the floating action button
-  const showFAB = canSavePreset && fabVisible;
   
   // Initialize essential categories on first load
   useEffect(() => {
@@ -206,10 +181,7 @@ const Converter: React.FC = () => {
         ]);
       } catch (error) {
         console.error('Failed to initialize essential categories:', error);
-        setToast({
-          message: 'Failed to load unit data. Please try again.',
-          type: 'error',
-        });
+        showToast('Failed to load unit data. Please try again.', 'error');
       } finally {
         setIsLoading(false);
       }
@@ -389,9 +361,6 @@ const Converter: React.FC = () => {
         });
       }
       
-      // Increment conversion count for analytics
-      setConversionCount(prev => prev + 1);
-      
     } catch (error) {
       console.error('Conversion failed:', error);
       setConvertedValue(null);
@@ -457,40 +426,41 @@ const Converter: React.FC = () => {
   const handleSwapUnits = () => {
     if (!fromUnit || !toUnit) return;
     
-    setIsSwapping(true);
-    setSwapColor(prev => !prev);
-    
     // Animate swap button
     if (swapButtonRef.current) {
       swapButtonRef.current.classList.add('animate-rotate-swap');
+      
+      // Force this operation to be synchronous by storing current values
+      const oldFromUnit = fromUnit;
+      const oldToUnit = toUnit;
+      const oldFromUnitData = fromUnitData;
+      const oldToUnitData = toUnitData;
+      
+      // Directly swap the units in a single render batch
+      setFromUnit(oldToUnit);
+      setToUnit(oldFromUnit);
+      
+      // Swap the unit data objects
+      if (oldFromUnitData && oldToUnitData) {
+        setFromUnitData(oldToUnitData);
+        setToUnitData(oldFromUnitData);
+      }
+      
+      // Update URL params
+      const params = new URLSearchParams(searchParams);
+      params.set('from', oldToUnit);
+      params.set('to', oldFromUnit);
+      setSearchParams(params);
+      
+      // Show success toast for better UX
+      showToast('Units swapped', 'success');
+      
+      // Remove animation class after delay
       setTimeout(() => {
         if (swapButtonRef.current) {
           swapButtonRef.current.classList.remove('animate-rotate-swap');
         }
-        // Wait for animation
-        setFromUnit(toUnit);
-        setToUnit(fromUnit);
-        setIsSwapping(false);
       }, 300);
-    }
-  };
-  
-  // Handle from value change
-  const handleFromValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setFromValue(newValue);
-    
-    // Validate input
-    if (newValue.trim() === '') {
-      setValidationError(null);
-      return;
-    }
-    
-    const numValue = parseFloat(newValue);
-    if (isNaN(numValue)) {
-      setValidationError('Please enter a valid number');
-    } else {
-      setValidationError(null);
     }
   };
   
@@ -503,10 +473,11 @@ const Converter: React.FC = () => {
     setFromUnitData(null);
     setToUnitData(null);
     setHasConverted(false);
+    setShowCategorySelection(false);
+    
+    // Show toast for better UX
+    showToast(`Changed to ${unitCategoryInfo[categoryId as UnitCategoryId]?.name || categoryId} category`, 'success');
   };
-  
-  // Determine if category is loading
-  const isCategoryLoadingState = categoryLoading || (!categoryData && selectedCategory !== '');
   
   // Get current category data
   const currentCategory = useMemo(() => 
@@ -574,17 +545,6 @@ const Converter: React.FC = () => {
     return 'standard';
   }, [currentCategory, fromUnit, toUnit]);
   
-  // Get relationship label
-  const getRelationshipLabel = () => {
-    switch (unitRelationship) {
-      case 'equal': return 'Same unit';
-      case 'decimal': return 'Decimal relationship';
-      case 'imperial': return 'Imperial units';
-      case 'imperial-metric': return 'Imperial-Metric conversion';
-      case 'similar': return 'Similar unit types';
-      default: return null;
-    }
-  };
   
   // Add this function to handle toggling favorites
   const handleToggleFavorite = () => {
@@ -605,34 +565,15 @@ const Converter: React.FC = () => {
         
         if (isInFavorites(record.id)) {
           removeFromFavorites(record.id);
-          setToast({
-            message: 'Removed from favorites',
-            type: 'success'
-          });
+          showToast('Removed from favorites', 'success');
         } else {
           addToFavorites(record);
-          setToast({
-            message: 'Added to favorites',
-            type: 'success'
-          });
+          showToast('Added to favorites', 'success');
         }
       }
     } catch (error) {
       console.error('Error toggling favorite:', error);
-      setToast({
-        message: 'Failed to update favorites',
-        type: 'error'
-      });
-    }
-  };
-  
-  // Add this function to handle applying presets
-  const handleApplyPreset = (presetId: string) => {
-    const preset = presets.find(p => p.id === presetId);
-    if (preset) {
-      setSelectedCategory(preset.category);
-      setFromUnit(preset.fromUnit);
-      setToUnit(preset.toUnit);
+      showToast('Failed to update favorites', 'error');
     }
   };
   
@@ -647,10 +588,7 @@ const Converter: React.FC = () => {
       });
       setIsAddingPreset(false);
       setPresetName('');
-      setToast({
-        message: 'Preset saved!',
-        type: 'success'
-      });
+      showToast('Preset saved!', 'success');
       
       // Animate the FAB
       if (fabRef.current) {
@@ -664,375 +602,476 @@ const Converter: React.FC = () => {
     }
   };
   
+  // Handler for applying a quick access conversion
+  const handleApplyQuickAccess = (item: QuickAccessItem) => {
+    if (item.category !== selectedCategory) {
+      setSelectedCategory(item.category);
+    }
+    setFromUnit(item.fromUnit);
+    setToUnit(item.toUnit);
+    
+    // Add toast for user feedback
+    showToast('Applied quick conversion', 'success');
+  };
+  
+  // Handler for input changes with the new expression input
+  const handleInputChange = (value: string, parsedValue: number | null) => {
+    setFromValue(value);
+    
+    if (parsedValue === null) {
+      setValidationError('Invalid expression');
+      setConvertedValue(null);
+    } else {
+      setValidationError(null);
+      // Conversion logic happens in the useEffect
+    }
+  };
+  
+  // Update the way toasts are handled
+  const showToast = (message: string, type: ToastType = 'info') => {
+    setToastQueue(prev => [...prev, { message, type }]);
+  };
+  
+  const dismissToast = () => {
+    setToastQueue(prev => prev.slice(1));
+  };
+  
+  // Mark tooltips as seen
+  useEffect(() => {
+    if (showFirstTimeTooltips) {
+      const timer = setTimeout(() => {
+        setShowFirstTimeTooltips(false);
+        localStorage.setItem('calcq_seen_tooltips', 'true');
+      }, 10000); // Show tooltips for 10 seconds
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showFirstTimeTooltips]);
+  
+  // Handle unit selection from search
+  const handleUnitSearch = (unitId: string, categoryId: string) => {
+    // First change the category if needed
+    if (categoryId !== selectedCategory) {
+      setSelectedCategory(categoryId);
+      
+      // Use loadUnitCategory to ensure the category data is loaded
+      loadUnitCategory(categoryId)
+        .then(data => {
+          setCategoryData(data);
+          
+          // Then set the from unit
+          setFromUnit(unitId);
+          
+          // Find the unit in the category data
+          const fromUnitObj = findUnitInCategoryData(data, unitId);
+          if (fromUnitObj) {
+            setFromUnitData(fromUnitObj);
+            
+            // Get compatible units for this unit
+            getCompatibleUnits(categoryId, unitId)
+              .then(compatUnits => {
+                setCompatibleUnits(compatUnits);
+                
+                // Set first compatible unit as the destination unit
+                if (compatUnits.length > 0) {
+                  setToUnit(compatUnits[0].id);
+                  setToUnitData(compatUnits[0]);
+                }
+              });
+          }
+        })
+        .catch(error => {
+          console.error('Failed to load category data:', error);
+          showToast('Failed to load category data', 'error');
+        });
+    } else {
+      // If we're already in the correct category, just set the from unit
+      setFromUnit(unitId);
+      
+      // Find the unit in the existing category data
+      if (categoryData) {
+        const fromUnitObj = findUnitInCategory(categoryData, unitId);
+        if (fromUnitObj) {
+          setFromUnitData(fromUnitObj);
+          
+          // Get compatible units
+          getCompatibleUnits(categoryId, unitId)
+            .then(compatUnits => {
+              setCompatibleUnits(compatUnits);
+              
+              // Set first compatible unit as the destination unit
+              if (compatUnits.length > 0) {
+                setToUnit(compatUnits[0].id);
+                setToUnitData(compatUnits[0]);
+              }
+            });
+        }
+      }
+    }
+    
+    // Hide the category selection view
+    setShowCategorySelection(false);
+    
+    // Show a toast notification
+    showToast(`Selected ${unitId}`, 'success');
+  };
+  
+  // Search for units when search input changes
+  useEffect(() => {
+    const performSearch = async () => {
+      if (searchInput.trim().length < 2) {
+        setSearchResults([]);
+        return;
+      }
+      
+      try {
+        // Use the unit search functionality
+        const results = searchUnits(searchInput, 15);
+        setSearchResults(results);
+      } catch (error) {
+        console.error('Error searching units:', error);
+        setSearchResults([]);
+      }
+    };
+    
+    const delayTimer = setTimeout(performSearch, 300);
+    return () => clearTimeout(delayTimer);
+  }, [searchInput]);
+  
+  // Close search dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.global-search-container')) {
+        setShowSearch(false);
+      }
+    };
+    
+    if (showSearch) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showSearch]);
+  
+  // Helper function to find a unit in loaded category data (similar to findUnitInCategory)
+  const findUnitInCategoryData = (category: UnitCategory, unitId: string): Unit | undefined => {
+    // Check direct units first
+    if (category.units) {
+      const unit = category.units.find(u => u.id === unitId);
+      if (unit) return unit;
+    }
+    
+    // Check in subcategories
+    if (category.subcategories) {
+      for (const subcategory of category.subcategories) {
+        const unit = subcategory.units.find(u => u.id === unitId);
+        if (unit) return unit;
+      }
+    }
+    
+    return undefined;
+  };
+  
   return (
-    <div className="pb-20 md:pb-0">
-      {isLoading ? (
-        <ConverterSkeleton />
-      ) : (
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Unit Converter</h1>
-            <p className="text-muted-foreground">Convert between different units of measurement</p>
-          </div>
-          
-          {/* Category selector */}
-          <div className="bg-card border border-border rounded-lg p-5">
-            <h2 className="text-lg font-semibold mb-3">Category</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-              {unitCategories.map(category => (
-                <button
-                  key={category.id}
-                  className={`p-2 rounded-md ${
-                    selectedCategory === category.id
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                  } ripple transition-transform active:scale-95 duration-150`} 
-                  onClick={() => setSelectedCategory(category.id)}
-                >
-                  {category.name}
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          {/* Converter */}
-          <div className="bg-card border border-border rounded-lg p-5 relative">
-            {/* Success animation overlay */}
-            <SuccessfulConversionAnimation isVisible={showSuccessAnimation} />
-            
-            <div className="flex justify-between mb-4">
-              <h2 className="text-lg font-semibold">Converter</h2>
-              
-              {/* Show relationship indicator when available */}
-              {getRelationshipLabel() && (
-                <div className="hidden sm:flex items-center px-2 py-1 bg-muted rounded-full text-xs text-muted-foreground">
-                  {getRelationshipLabel()}
-                </div>
-              )}
-              
-              {/* Toolbar for desktop: side by side */}
-              <div className="hidden sm:flex space-x-2">
-                <button
-                  ref={swapButtonRef}
-                  onClick={handleSwapUnits}
-                  role="button"
-                  aria-pressed={isSwapping}
-                  className={`p-2 rounded-md ${
-                    swapColor ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'
-                  } hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-primary/50 ripple transition-all duration-200 active:scale-95`}
-                  aria-label="Swap units"
-                  disabled={isSwapping}
-                >
-                  <ArrowUpDown 
-                    className={`w-5 h-5 transition-transform duration-200 ease-in-out ${
-                      isSwapping ? 'rotate-180' : ''
-                    }`} 
-                    aria-hidden="true"
-                  />
-                </button>
-                <button
-                  ref={favoriteButtonRef}
-                  onClick={() => {
-                    if (!canSavePreset) return;
-                    handleToggleFavorite();
-                  }}
-                  role="button"
-                  aria-pressed={isFavorite()}
-                  className={`p-2 rounded-md ${canSavePreset 
-                    ? 'bg-secondary text-secondary-foreground hover:bg-secondary/80' 
-                    : 'bg-muted text-muted-foreground cursor-not-allowed'
-                  } focus:outline-none focus:ring-2 focus:ring-primary/50 ripple transition-transform active:scale-95 duration-150`}
-                  aria-label={isFavorite() ? "Remove from favorites" : "Add to favorites"}
-                  disabled={!canSavePreset}
-                >
-                  <Star 
-                    className={`w-5 h-5 ${isFavorite() ? "fill-amber-500 text-amber-500" : ""}`} 
-                    aria-hidden="true"
-                  />
-                </button>
-              </div>
-            </div>
-            
-            {/* Side-by-side on large screens, stacked on small */}
-            <div className="space-y-6 sm:space-y-0 sm:flex sm:gap-6 sm:items-start">
-              {/* From unit */}
-              <div className="w-full sm:w-1/2 relative">
-                <label htmlFor="fromValue" className="block text-sm font-medium text-foreground mb-1">
-                  From
-                </label>
-                <div className="space-y-2 sm:space-y-2">
-                  <div className="relative">
-                    <input
-                      id="fromValue"
-                      ref={fromValueInputRef}
-                      type="text"
-                      inputMode="decimal"
-                      value={fromValue}
-                      onChange={handleFromValueChange}
-                      className={`w-full bg-background text-foreground border rounded-md px-3 py-2 focus:outline-none focus:ring-2 ${
-                        validationError ? 'border-red-500 focus:border-red-500 focus:ring-red-500/50' : 'border-input focus:ring-primary/50 focus:border-primary'
-                      } transition-colors duration-200`}
-                      placeholder="Enter value"
-                      aria-invalid={validationError ? 'true' : 'false'}
-                      aria-describedby={validationError ? 'fromValue-error' : undefined}
-                      autoComplete="off"
-                    />
-                    
-                    {/* Show inline result for small screens - with smart formatting */}
-                    {!validationError && convertedValue !== null && (
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-muted-foreground transition-opacity duration-200">
-                        = {formattedResult} {toUnitSymbol}
-                      </div>
-                    )}
-                    
-                    {/* Show calculating indicator */}
-                    {isCalculating && !validationError && (
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                        <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                      </div>
-                    )}
-                    
-                    {/* Toolbar for mobile: floating on the card */}
-                    <div className="sm:hidden absolute -right-3 top-0 transform -translate-y-full flex flex-col gap-2 p-2">
-                      <button
-                        ref={swapButtonRef}
-                        onClick={handleSwapUnits}
-                        role="button"
-                        aria-pressed={isSwapping}
-                        className={`p-2 rounded-full shadow-sm ${
-                          swapColor ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'
-                        } hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-primary/50 ripple transition-all duration-200 active:scale-95`}
-                        aria-label="Swap units"
-                        disabled={isSwapping}
-                      >
-                        <ArrowUpDown 
-                          className={`w-4 h-4 transition-transform duration-200 ease-in-out ${
-                            isSwapping ? 'rotate-180' : ''
-                          }`} 
-                          aria-hidden="true"
-                        />
-                      </button>
-                      <button
-                        ref={favoriteButtonRef}
-                        onClick={() => {
-                          if (!canSavePreset) return;
-                          handleToggleFavorite();
-                        }}
-                        role="button"
-                        aria-pressed={isFavorite()}
-                        className={`p-2 rounded-full shadow-sm ${canSavePreset 
-                          ? 'bg-secondary text-secondary-foreground hover:bg-secondary/80' 
-                          : 'bg-muted text-muted-foreground cursor-not-allowed'
-                        } focus:outline-none focus:ring-2 focus:ring-primary/50 ripple transition-transform active:scale-95 duration-150`}
-                        aria-label={isFavorite() ? "Remove from favorites" : "Add to favorites"}
-                        disabled={!canSavePreset}
-                      >
-                        <Star 
-                          className={`w-4 h-4 ${isFavorite() ? "fill-amber-500 text-amber-500" : ""}`} 
-                          aria-hidden="true"
-                        />
-                      </button>
-                    </div>
-                  </div>
-                  
-                  {validationError && (
-                    <div id="fromValue-error" className="text-xs text-red-500 animate-fadeIn">
-                      {validationError}
-                    </div>
-                  )}
-                  
-                  <select
-                    value={fromUnit}
-                    onChange={(e) => setFromUnit(e.target.value)}
-                    className="w-full bg-background text-foreground border border-input rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors duration-200"
-                    aria-label="From unit"
-                  >
-                    {currentCategory?.units.map(unit => (
-                      <option key={unit.id} value={unit.id}>
-                        {unit.name} ({unit.symbol})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              
-              {/* To unit - only visible on large screens */}
-              <div className="hidden sm:block w-full sm:w-1/2">
-                <label htmlFor="toUnit" className="block text-sm font-medium text-foreground mb-1">
-                  To
-                </label>
-                <div className="space-y-2">
-                  <div className="relative">
-                    <div className="w-full bg-muted text-foreground border border-input rounded-md px-3 py-2 flex items-center h-[38px] transition-colors duration-200">
-                      <span className={convertedValue === null ? 'text-muted-foreground' : 'text-foreground transition-opacity duration-200'}>
-                        {convertedValue === null ? 'Result' : formattedResult}
-                      </span>
-                      {isCalculating && (
-                        <div className="ml-2 w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <select
-                    id="toUnit"
-                    value={toUnit}
-                    onChange={(e) => setToUnit(e.target.value)}
-                    className="w-full bg-background text-foreground border border-input rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors duration-200"
-                    aria-label="To unit"
-                  >
-                    {currentCategory?.units.map(unit => (
-                      <option key={unit.id} value={unit.id}>
-                        {unit.name} ({unit.symbol})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-            
-            {/* Show relationship indicator for mobile */}
-            {getRelationshipLabel() && (
-              <div className="sm:hidden mt-3 flex items-center justify-center">
-                <span className="px-2 py-1 bg-muted rounded-full text-xs text-muted-foreground">
-                  {getRelationshipLabel()}
-                </span>
-              </div>
-            )}
-            
-            {/* To unit selector only (small screens) */}
-            <div className="block sm:hidden w-full mt-2">
-              <select
-                id="toUnitMobile"
-                value={toUnit}
-                onChange={(e) => setToUnit(e.target.value)}
-                className="w-full bg-background text-foreground border border-input rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors duration-200"
-                aria-label="To unit"
-              >
-                {currentCategory?.units.map(unit => (
-                  <option key={unit.id} value={unit.id}>
-                    {unit.name} ({unit.symbol})
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            {/* Reserve space for errors, FAB and toasts to avoid layout shifts */}
-            <div className="h-8"></div>
-          </div>
-          
-          {/* Saved Presets */}
-          {presets.length > 0 && (
-            <div className="bg-card border border-border rounded-lg p-5">
-              <h2 className="text-lg font-semibold mb-3">Saved Presets</h2>
-              <div className="space-y-2">
-                {presets.map((preset) => {
-                  const category = unitCategories.find(cat => cat.id === preset.category);
-                  const fromUnitObj = category?.units.find(u => u.id === preset.fromUnit);
-                  const toUnitObj = category?.units.find(u => u.id === preset.toUnit);
-                  
-                  return (
-                    <button
-                      key={preset.id}
-                      className="w-full p-2 flex items-center justify-between bg-muted rounded-md hover:bg-muted/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 ripple transition-transform active:scale-95 duration-150"
-                      onClick={() => handleApplyPreset(preset.id)}
-                    >
-                      <span className="font-medium">{preset.name}</span>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <span>{fromUnitObj?.symbol || preset.fromUnit}</span>
-                        <MoveRight className="mx-1 w-3 h-3" />
-                        <span>{toUnitObj?.symbol || preset.toUnit}</span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-      
-      {/* Floating Action Button */}
-      {showFAB && (
-        <button
-          ref={fabRef}
-          onClick={() => setIsAddingPreset(true)}
-          className="fixed bottom-24 md:bottom-6 right-6 bg-primary text-primary-foreground w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:bg-primary/90 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/50 ripple animate-fadeIn duration-150"
-          aria-label="Save preset"
-          disabled={!canSavePreset || isCalculating}
-        >
-          {isCalculating ? (
-            <div className="w-6 h-6 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin"></div>
-          ) : (
-            <Save className="w-6 h-6" />
-          )}
-        </button>
-      )}
-      
-      {/* Add preset modal */}
-      {isAddingPreset && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
-          <div className="bg-card border border-border rounded-lg p-5 w-full max-w-md">
-            <h2 className="text-lg font-semibold mb-3">Save Preset</h2>
-            <p className="text-sm text-muted-foreground mb-4">Save this conversion for quick access later</p>
-            
-            <div className="mb-4">
-              <label htmlFor="presetName" className="block text-sm font-medium text-foreground mb-1">
-                Preset Name
-              </label>
-              <input
-                id="presetName"
-                type="text"
-                value={presetName}
-                onChange={(e) => setPresetName(e.target.value)}
-                placeholder="e.g., Meters to Feet"
-                className="w-full bg-background text-foreground border border-input rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                autoComplete="off"
-              />
-            </div>
-            
-            <div className="text-sm mb-4">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-medium">Category:</span> 
-                <span>{currentCategory?.name}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="font-medium">Conversion:</span>
-                <span>{fromUnitSymbol} → {toUnitSymbol}</span>
-              </div>
-            </div>
-            
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => setIsAddingPreset(false)}
-                className="px-3 py-1.5 border border-border rounded-md bg-muted text-foreground hover:bg-muted/80 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/50 ripple duration-150"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSavePreset}
-                disabled={!presetName.trim()}
-                className={`px-3 py-1.5 rounded-md ${
-                  presetName.trim() 
-                    ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
-                    : 'bg-muted text-muted-foreground cursor-not-allowed'
-                } transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/50 ripple duration-150`}
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Toast notification */}
-      {toast && (
+    <>
+      {toastQueue.length > 0 && (
         <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
+          message={toastQueue[0].message}
+          type={toastQueue[0].type}
+          onClose={dismissToast}
         />
       )}
-    </div>
+      
+      <div className="container mx-auto px-4 py-6 max-w-3xl">
+        {/* Compact title */}
+        <h1 className="text-lg font-medium text-primary mb-3">Unit Converter</h1>
+        
+        {isLoading ? (
+          <ConverterSkeleton />
+        ) : (
+          <>
+            {/* Global search box */}
+            <div className="mb-4 relative global-search-container">
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none">
+                <Search className="w-4 h-4" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search all units (e.g., meters, pounds, celsius)..."
+                className="w-full py-2 px-10 rounded-lg border border-border bg-card focus:ring-1 focus:ring-primary focus:border-primary text-sm"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onFocus={() => setShowSearch(true)}
+              />
+              {searchInput && (
+                <button 
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    setSearchInput('');
+                    setSearchResults([]);
+                  }}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+              
+              {/* Search results dropdown */}
+              {showSearch && (
+                <div className="absolute z-10 mt-1 w-full bg-card border border-border rounded-md shadow-lg max-h-64 overflow-auto">
+                  {searchInput.length > 0 ? (
+                    searchResults.length > 0 ? (
+                      <div className="p-2">
+                        {searchResults.map((result) => (
+                          <button
+                            key={`${result.categoryId}-${result.unitId}`}
+                            className="w-full text-left px-3 py-2 hover:bg-muted text-sm rounded-md flex justify-between items-center"
+                            onClick={() => {
+                              handleUnitSearch(result.unitId, result.categoryId);
+                              setSearchInput('');
+                              setSearchResults([]);
+                              setShowSearch(false);
+                            }}
+                          >
+                            <div>
+                              <div className="font-medium">{result.name}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {unitCategoryInfo[result.categoryId as UnitCategoryId]?.name || result.categoryId}
+                              </div>
+                            </div>
+                            <span className="text-muted-foreground">{result.symbol}</span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-4 text-center text-muted-foreground">
+                        No units found matching "{searchInput}"
+                      </div>
+                    )
+                  ) : (
+                    <div className="p-2">
+                      <button
+                        className="w-full text-left px-3 py-2 hover:bg-muted text-sm rounded-md"
+                        onClick={() => {
+                          setShowCategorySelection(true);
+                          setShowSearch(false);
+                        }}
+                      >
+                        Browse all categories
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            {/* Quick access chips for recent and favorite conversions */}
+            <QuickAccessChips 
+              onApplyConversion={handleApplyQuickAccess} 
+              currentCategory={selectedCategory}
+            />
+            
+            {/* Category selection */}
+            {showCategorySelection ? (
+              <CategorySelector
+                selectedCategory={selectedCategory}
+                onSelectCategory={handleCategoryChange}
+                availableCategories={availableCategories}
+                isLoading={categoryLoading}
+                showBackButton={true}
+                onBack={() => setShowCategorySelection(false)}
+                onSelectUnit={handleUnitSearch}
+              />
+            ) : (
+              <button
+                className="w-full py-3 px-4 mb-4 bg-card border border-border rounded-lg flex items-center justify-between hover:bg-muted/50 transition-colors"
+                onClick={() => setShowCategorySelection(true)}
+                aria-label="Select category"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-medium">
+                    {unitCategoryInfo[selectedCategory as UnitCategoryId]?.name || 'Select Category'}
+                  </span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </button>
+            )}
+            
+            {/* Main conversion card */}
+            <div className="bg-card border border-border rounded-lg p-5">
+              <div className="flex justify-between mb-4">
+                <h2 className="text-lg font-medium">Convert</h2>
+                
+                {/* Conversion actions */}
+                <ConverterActions
+                  canSave={canSavePreset}
+                  isFavorite={isFavorite()}
+                  onSwap={handleSwapUnits}
+                  onFavorite={handleToggleFavorite}
+                  onSavePreset={() => setIsAddingPreset(true)}
+                  swapButtonRef={swapButtonRef}
+                  onCopy={() => {
+                    if (convertedValue !== null && toUnitData) {
+                      navigator.clipboard.writeText(
+                        `${formattedConvertedValue} ${toUnitData.symbol}`
+                      );
+                      showToast('Copied to clipboard', 'success');
+                    }
+                  }}
+                  onShare={() => {
+                    // Implementation for share functionality
+                    const url = window.location.href;
+                    if (navigator.share) {
+                      navigator.share({
+                        title: 'Unit Conversion',
+                        text: `${fromValue} ${fromUnitData?.symbol} = ${formattedConvertedValue} ${toUnitData?.symbol}`,
+                        url
+                      }).catch(err => console.error('Share failed:', err));
+                    } else {
+                      navigator.clipboard.writeText(url);
+                      showToast('Link copied to clipboard', 'success');
+                    }
+                  }}
+                />
+              </div>
+              
+              <div className="space-y-6">
+                {/* From section */}
+                <div>
+                  <label className="block text-sm text-muted-foreground mb-1">From</label>
+                  <div className="sm:flex gap-4">
+                    <div className="flex-1 mb-4 sm:mb-0">
+                      <ExpressionInput 
+                        value={fromValue}
+                        onChange={handleInputChange}
+                        placeholder="Enter a value..."
+                        autoFocus
+                      />
+                    </div>
+                    
+                    <div className="w-full sm:w-1/3">
+                      <UnitSelector
+                        categoryId={selectedCategory}
+                        units={categoryData?.units || []}
+                        selectedUnitId={fromUnit}
+                        onChange={(unitId) => handleUnitSelect(unitId, 'from')}
+                        recentUnits={popularUnits}
+                        loading={categoryLoading}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* To section */}
+                <div>
+                  <label className="block text-sm text-muted-foreground mb-1">To</label>
+                  <div className="sm:flex gap-4">
+                    <div className="flex-1 mb-4 sm:mb-0">
+                      {fromUnitData && toUnitData && (
+                        <ConversionResult
+                          fromValue={parseFloat(fromValue) || 0}
+                          fromUnit={fromUnitData}
+                          toValue={convertedValue}
+                          toUnit={toUnitData}
+                          categoryId={selectedCategory}
+                          isCalculating={isCalculating}
+                        />
+                      )}
+                    </div>
+                    
+                    <div className="w-full sm:w-1/3">
+                      <UnitSelector
+                        categoryId={selectedCategory}
+                        units={compatibleUnits}
+                        selectedUnitId={toUnit}
+                        onChange={(unitId) => handleUnitSelect(unitId, 'to')}
+                        recentUnits={popularUnits}
+                        loading={categoryLoading}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Relationship indicator */}
+                {fromUnitData && toUnitData && convertedValue !== null && (
+                  <RelationshipIndicator
+                    fromUnit={fromUnitData}
+                    toUnit={toUnitData}
+                    conversionFactor={convertedValue / (parseFloat(fromValue) || 1)}
+                  />
+                )}
+                
+                {/* Educational unit information */}
+                {toUnit && (
+                  <UnitInformation
+                    unitId={toUnit}
+                    categoryId={selectedCategory}
+                  />
+                )}
+              </div>
+            </div>
+            
+            {/* Success animation */}
+            <SuccessfulConversionAnimation isVisible={showSuccessAnimation} />
+            
+            {/* Add preset modal */}
+            {isAddingPreset && (
+              <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 modal-overlay">
+                <div className="bg-card border border-border rounded-lg shadow-lg w-full max-w-md modal-content">
+                  <div className="p-4 border-b border-border flex items-center justify-between">
+                    <h3 className="font-semibold">Save Preset</h3>
+                    <button
+                      onClick={() => setIsAddingPreset(false)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                  
+                  <div className="p-4">
+                    <div className="mb-4">
+                      <label className="block text-sm text-muted-foreground mb-1">
+                        Preset Name
+                      </label>
+                      <input
+                        type="text"
+                        value={presetName}
+                        onChange={(e) => setPresetName(e.target.value)}
+                        placeholder="Enter a name for this preset"
+                        className="w-full p-2 bg-muted border-0 rounded-md"
+                        autoFocus
+                      />
+                    </div>
+                    
+                    <div className="text-sm text-muted-foreground mb-4">
+                      This will save the current conversion for quick access.
+                    </div>
+                    
+                    <div className="flex justify-end gap-2">
+                      <button
+                        className="px-4 py-2 rounded-md bg-muted hover:bg-muted/80 transition-colors"
+                        onClick={() => setIsAddingPreset(false)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        className="px-4 py-2 rounded-md bg-primary text-white hover:bg-primary/90 transition-colors"
+                        onClick={handleSavePreset}
+                        disabled={!presetName.trim()}
+                      >
+                        Save Preset
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </>
   );
 };
 

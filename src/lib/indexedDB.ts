@@ -5,6 +5,7 @@ const DB_NAME = 'unitConverterDB';
 const DB_VERSION = 2; // Incrementing version for schema upgrade
 const HISTORY_STORE = 'conversionHistory';
 const USAGE_STORE = 'usageFrequency';  // New store for tracking usage
+const FAVORITES_STORE = 'favorites';  // Store for favorite conversions
 
 interface UsageRecord {
   id: string;  // Composite key of category-fromUnit-toUnit
@@ -14,6 +15,17 @@ interface UsageRecord {
   category: string;
   fromUnit: string;
   toUnit: string;
+}
+
+// QuickAccess item interface for the UI
+export interface QuickAccessItem {
+  id: string;
+  fromUnit: string;
+  fromUnitSymbol: string;
+  toUnit: string;
+  toUnitSymbol: string;
+  category: string;
+  isFavorite: boolean;
 }
 
 /**
@@ -47,6 +59,14 @@ export const openDatabase = (): Promise<IDBDatabase> => {
         
         // Composite index for more complex queries
         store.createIndex('category_count', ['category', 'count'], { unique: false });
+      }
+      
+      // Create object store for favorites if it doesn't exist
+      if (!db.objectStoreNames.contains(FAVORITES_STORE)) {
+        const store = db.createObjectStore(FAVORITES_STORE, { keyPath: 'id' });
+        // Create indexes for efficient querying
+        store.createIndex('timestamp', 'timestamp', { unique: false });
+        store.createIndex('category', 'category', { unique: false });
       }
     };
 
@@ -436,4 +456,164 @@ export const removeHistoryRecord = async (id: string): Promise<void> => {
   } catch (error) {
     console.error('Failed to remove history record:', error);
   }
+};
+
+/**
+ * Get unique recent conversions for quick access chips
+ * Ensures only one conversion per unit pair (from/to) is included
+ * @param limit Maximum number of records to retrieve
+ * @returns Promise resolving to array of QuickAccessItems
+ */
+export const getRecentUniqueConversions = async (limit = 5): Promise<QuickAccessItem[]> => {
+  try {
+    const db = await openDatabase();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([HISTORY_STORE, FAVORITES_STORE], 'readonly');
+      const store = transaction.objectStore(HISTORY_STORE);
+      const favoritesStore = transaction.objectStore(FAVORITES_STORE);
+      const index = store.index('timestamp');
+      
+      // Use a cursor to get the latest records in reverse chronological order
+      const request = index.openCursor(null, 'prev');
+      const records: QuickAccessItem[] = [];
+      const uniquePairs = new Set<string>(); // Track unique unit pairs
+      
+      // First, get a list of favorite IDs to check against
+      const getAllFavoritesRequest = favoritesStore.getAll();
+      let favoriteIds = new Set<string>();
+      
+      getAllFavoritesRequest.onsuccess = (event) => {
+        const favorites = (event.target as IDBRequest).result as ConversionRecord[];
+        favoriteIds = new Set(favorites.map(fav => fav.id));
+        
+        // Now process the history records
+        request.onsuccess = (event) => {
+          const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
+          if (cursor) {
+            const record = cursor.value as ConversionRecord;
+            const pairKey = `${record.category}-${record.fromUnit}-${record.toUnit}`;
+            
+            // Only add if we haven't seen this unit pair yet
+            if (!uniquePairs.has(pairKey) && records.length < limit) {
+              // Get symbols from the record
+              const fromSymbol = getUnitSymbol(record.fromUnit);
+              const toSymbol = getUnitSymbol(record.toUnit);
+              
+              records.push({
+                id: record.id,
+                fromUnit: record.fromUnit,
+                fromUnitSymbol: fromSymbol,
+                toUnit: record.toUnit,
+                toUnitSymbol: toSymbol,
+                category: record.category,
+                isFavorite: favoriteIds.has(record.id)
+              });
+              
+              uniquePairs.add(pairKey);
+            }
+            cursor.continue();
+          } else {
+            resolve(records);
+          }
+        };
+      };
+      
+      request.onerror = (event) => {
+        console.error('Error getting unique conversions:', (event.target as IDBRequest).error);
+        reject((event.target as IDBRequest).error);
+      };
+
+      transaction.oncomplete = () => db.close();
+    });
+  } catch (error) {
+    console.error('Failed to get unique conversions:', error);
+    return [];
+  }
+};
+
+/**
+ * Get favorite conversions for quick access
+ * @param limit Maximum number of records to retrieve 
+ * @returns Promise resolving to array of QuickAccessItems
+ */
+export const getFavoriteConversions = async (limit = 5): Promise<QuickAccessItem[]> => {
+  try {
+    const db = await openDatabase();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(FAVORITES_STORE, 'readonly');
+      const store = transaction.objectStore(FAVORITES_STORE);
+      const index = store.index('timestamp');
+      
+      // Use a cursor to get the most recent favorites
+      const request = index.openCursor(null, 'prev');
+      const records: QuickAccessItem[] = [];
+
+      request.onsuccess = (event) => {
+        const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
+        if (cursor && records.length < limit) {
+          const record = cursor.value as ConversionRecord;
+          
+          // Get symbols from the record
+          const fromSymbol = getUnitSymbol(record.fromUnit);
+          const toSymbol = getUnitSymbol(record.toUnit);
+          
+          records.push({
+            id: record.id,
+            fromUnit: record.fromUnit,
+            fromUnitSymbol: fromSymbol,
+            toUnit: record.toUnit,
+            toUnitSymbol: toSymbol,
+            category: record.category,
+            isFavorite: true
+          });
+          
+          cursor.continue();
+        } else {
+          resolve(records);
+        }
+      };
+
+      request.onerror = (event) => {
+        console.error('Error getting favorite conversions:', (event.target as IDBRequest).error);
+        reject((event.target as IDBRequest).error);
+      };
+
+      transaction.oncomplete = () => db.close();
+    });
+  } catch (error) {
+    console.error('Failed to get favorite conversions:', error);
+    return [];
+  }
+};
+
+/**
+ * Helper function to get unit symbol from unit ID
+ * Simplified version for quick access - in real implementation
+ * this would use the unit registry or lookup service
+ */
+const getUnitSymbol = (unitId: string): string => {
+  // This is a simplified lookup - in real implementation
+  // this would query the unit registry
+  const commonSymbols: Record<string, string> = {
+    'meter': 'm',
+    'kilometer': 'km',
+    'centimeter': 'cm',
+    'millimeter': 'mm',
+    'inch': 'in',
+    'foot': 'ft',
+    'yard': 'yd',
+    'mile': 'mi',
+    'kilogram': 'kg',
+    'gram': 'g',
+    'pound': 'lb',
+    'ounce': 'oz',
+    'celsius': '°C',
+    'fahrenheit': '°F',
+    'kelvin': 'K',
+    'liter': 'L',
+    'gallon_us': 'gal',
+    'cup_us': 'cup',
+  };
+  
+  return commonSymbols[unitId] || unitId;
 }; 

@@ -1,0 +1,306 @@
+/* Animation classes for the Calcq unit converter */
+
+/* Result update animation */
+@keyframes result-flash {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.2;
+  }
+  60% {
+    opacity: 0.1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.animate-result-flash {
+  animation: result-flash 700ms ease-out forwards;
+}
+
+.result-updated {
+  animation: result-update 400ms ease-out;
+}
+
+@keyframes result-update {
+  0% {
+    transform: translateY(4px);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Button ripple effect */
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple::after {
+  content: "";
+  display: block;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, currentColor 10%, transparent 10.01%);
+  background-repeat: no-repeat;
+  background-position: 50%;
+  transform: scale(10, 10);
+  opacity: 0;
+  transition: transform 0.5s, opacity 0.8s;
+}
+
+.ripple:active::after {
+  transform: scale(0, 0);
+  opacity: 0.3;
+  transition: 0s;
+}
+
+/* Swap animation */
+.swap-active {
+  animation: swap-rotate 200ms ease-out;
+}
+
+@keyframes swap-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(180deg);
+  }
+}
+
+/* Category transition animation */
+@keyframes category-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.category-appear {
+  animation: category-appear 300ms ease-out;
+}
+
+/* Button hover effect */
+@keyframes button-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(var(--primary), 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(var(--primary), 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--primary), 0);
+  }
+}
+
+.button-focus-ring {
+  animation: button-pulse 1.5s infinite;
+}
+
+/* Success animation for conversion */
+@keyframes conversion-success-fade {
+  0%, 30% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-conversion-success {
+  animation: conversion-success-fade 600ms ease-out forwards;
+}
+
+.animate-conversion-circle {
+  animation: circle-draw 1200ms ease-out forwards;
+}
+
+.animate-conversion-check {
+  animation: check-draw 600ms ease-out 600ms forwards;
+}
+
+@keyframes circle-draw {
+  from {
+    stroke-dashoffset: 140;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes check-draw {
+  from {
+    stroke-dashoffset: 30;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Toast notification slide-down animation */
+@keyframes slide-down {
+  0% {
+    transform: translate(-50%, -20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-down {
+  animation: slide-down 300ms ease-out forwards;
+}
+
+/* Quick access chips animation */
+@keyframes chip-appear {
+  0% {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.quick-access-container button {
+  animation: chip-appear 300ms ease-out;
+  animation-fill-mode: backwards;
+}
+
+.quick-access-container button:nth-child(1) { animation-delay: 0ms; }
+.quick-access-container button:nth-child(2) { animation-delay: 50ms; }
+.quick-access-container button:nth-child(3) { animation-delay: 100ms; }
+.quick-access-container button:nth-child(4) { animation-delay: 150ms; }
+.quick-access-container button:nth-child(5) { animation-delay: 200ms; }
+
+/* Breadcrumb animation */
+@keyframes breadcrumb-item-appear {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.breadcrumb li {
+  animation: breadcrumb-item-appear 300ms ease-out;
+  animation-fill-mode: backwards;
+}
+
+.breadcrumb li:nth-child(1) { animation-delay: 0ms; }
+.breadcrumb li:nth-child(2) { animation-delay: 100ms; }
+.breadcrumb li:nth-child(3) { animation-delay: 200ms; }
+
+/* Floating action button animations */
+@keyframes fab-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(var(--primary), 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(var(--primary), 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--primary), 0);
+  }
+}
+
+.animate-fab-pulse {
+  animation: fab-pulse 1.5s ease infinite;
+}
+
+/* Modal animations */
+@keyframes modal-overlay-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-content-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-overlay {
+  animation: modal-overlay-appear 300ms ease-out;
+}
+
+.modal-content {
+  animation: modal-content-appear 300ms ease-out;
+}
+
+/* Tooltip animations */
+@keyframes tooltip-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.tooltip-content {
+  animation: tooltip-appear 200ms ease-out;
+}
+
+/* Educational fact animations */
+@keyframes fact-appear {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fact-content {
+  animation: fact-appear 300ms ease-out;
+}
+
+/* Tab highlight animation */
+@keyframes tab-highlight {
+  0% {
+    opacity: 0;
+    transform: scaleX(0.7);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+.tab-active-indicator {
+  animation: tab-highlight 300ms ease-out forwards;
+} 

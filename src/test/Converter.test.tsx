@@ -139,8 +139,6 @@ describe('Converter Component', () => {
       expect(screen.queryByText(/Category/i)).toBeInTheDocument();
     });
     
-    // At first, the FAB might not be visible until conversion is complete
-    const initialFab = screen.queryByLabelText(/Save preset/i);
     
     // Find the input using ID
     const input = screen.getByPlaceholderText('Enter value');

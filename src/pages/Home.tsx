@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Ruler, Scale, Beaker, Thermometer, Square, PlaneTakeoff, Clock, HardDrive, Search, ChevronDown, ChevronUp, Info, History, Star, TrendingUp, Zap } from 'lucide-react';
+import { Ruler, Scale, Beaker, Thermometer, Square, PlaneTakeoff, Clock, HardDrive, Search, ChevronDown, ChevronUp, Info, History, TrendingUp, Zap } from 'lucide-react';
 import { ConversionRecord } from '../contexts/HistoryContext';
 import { getRecentConversions, getRecommendedConversions, getFrequentCategories, preloadFrequentConversionData } from '../lib/indexedDB';
 import { unitCategories } from '../lib/units';

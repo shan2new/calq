@@ -3,7 +3,7 @@
  * Implements fast prefix matching and relevance ranking
  */
 
-import { Unit, UnitCategory, SubCategory, UnitSearchResult } from './unit-types';
+import { Unit, UnitCategory, UnitSearchResult } from './unit-types';
 
 interface UnitIndexEntry {
   unitId: string;
