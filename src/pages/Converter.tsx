@@ -894,12 +894,6 @@ const Converter: React.FC = () => {
               )}
             </div>
             
-            {/* Quick access chips for recent and favorite conversions */}
-            <QuickAccessChips 
-              onApplyConversion={handleApplyQuickAccess} 
-              currentCategory={selectedCategory}
-            />
-            
             {/* Category selection */}
             {showCategorySelection ? (
               <CategorySelector
@@ -965,19 +959,21 @@ const Converter: React.FC = () => {
               </div>
               
               <div className="space-y-6">
-                {/* From section */}
+                {/* Main conversion section - reorganized layout */}
                 <div>
-                  <label className="block text-sm text-muted-foreground mb-1">From</label>
-                  <div className="sm:flex gap-4">
-                    <div className="flex-1 mb-4 sm:mb-0">
-                      <ExpressionInput 
-                        value={fromValue}
-                        onChange={handleInputChange}
-                        placeholder="Enter a value..."
-                      />
-                    </div>
-                    
-                    <div className="w-full sm:w-1/3">
+                  {/* Value input */}
+                  <div className="mb-4">
+                    <ExpressionInput 
+                      value={fromValue}
+                      onChange={handleInputChange}
+                      placeholder="Enter a value..."
+                    />
+                  </div>
+                  
+                  {/* Units row with arrow between */}
+                  <div className="flex items-center gap-2">
+                    {/* From unit */}
+                    <div className="flex-1">
                       <UnitSelector
                         categoryId={selectedCategory}
                         units={categoryData?.units || []}
@@ -987,27 +983,14 @@ const Converter: React.FC = () => {
                         loading={categoryLoading}
                       />
                     </div>
-                  </div>
-                </div>
-                
-                {/* To section */}
-                <div>
-                  <label className="block text-sm text-muted-foreground mb-1">To</label>
-                  <div className="sm:flex gap-4">
-                    <div className="flex-1 mb-4 sm:mb-0">
-                      {fromUnitData && toUnitData && (
-                        <ConversionResult
-                          fromValue={parseFloat(fromValue) || 0}
-                          fromUnit={fromUnitData}
-                          toValue={convertedValue}
-                          toUnit={toUnitData}
-                          categoryId={selectedCategory}
-                          isCalculating={isCalculating}
-                        />
-                      )}
+                    
+                    {/* Arrow icon */}
+                    <div className="flex-shrink-0 flex items-center justify-center text-muted-foreground">
+                      <ChevronRight className="w-5 h-5" />
                     </div>
                     
-                    <div className="w-full sm:w-1/3">
+                    {/* To unit */}
+                    <div className="flex-1">
                       <UnitSelector
                         categoryId={selectedCategory}
                         units={compatibleUnits}
@@ -1018,6 +1001,20 @@ const Converter: React.FC = () => {
                       />
                     </div>
                   </div>
+                </div>
+                
+                {/* Conversion result */}
+                <div>
+                  {fromUnitData && toUnitData && (
+                    <ConversionResult
+                      fromValue={parseFloat(fromValue) || 0}
+                      fromUnit={fromUnitData}
+                      toValue={convertedValue}
+                      toUnit={toUnitData}
+                      categoryId={selectedCategory}
+                      isCalculating={isCalculating}
+                    />
+                  )}
                 </div>
                 
                 {/* Relationship indicator */}

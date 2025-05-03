@@ -105,7 +105,7 @@ const UnitSelector: React.FC<UnitSelectorProps> = ({
   
   return (
     <div className="unit-selector-container">
-      {label && <label className="block text-sm text-muted-foreground mb-1">{label}</label>}
+      {/* {label && <label className="block text-sm text-muted-foreground mb-1">{label}</label>} */}
       
       <div className="relative" ref={dropdownRef}>
         <button 
