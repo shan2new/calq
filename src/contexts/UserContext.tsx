@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { CompoundFormatType, CompoundUnitPreferences, defaultCompoundPreferences, compoundFormats } from '../lib/compound-unit-types';
 
 interface UserPreferences {
   defaultCategory?: string;
@@ -25,16 +26,23 @@ interface UserPreferences {
     formulaConversion: boolean;
     exportData: boolean;
   };
+  compoundPreferences: CompoundUnitPreferences;
 }
 
 interface UserContextType {
   userPreferences: UserPreferences;
   isLoading: boolean;
   updatePreferences: (newPrefs: Partial<UserPreferences>) => Promise<void>;
+  updateCompoundPreferences: (newPrefs: Partial<CompoundUnitPreferences>) => Promise<void>;
   detectUserLocation: () => Promise<void>;
   resetPreferences: () => Promise<void>;
   isPremium: () => boolean;
   hasFeature: (featureName: string) => boolean;
+  getPreferredCompoundFormat: (formatType: CompoundFormatType) => {
+    enabled: boolean;
+    fromFormat: string[];
+    toFormat: string[];
+  };
 }
 
 const defaultPreferences: UserPreferences = {
@@ -56,6 +64,7 @@ const defaultPreferences: UserPreferences = {
     formulaConversion: false,
     exportData: false,
   },
+  compoundPreferences: defaultCompoundPreferences,
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -72,7 +81,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const savedPreferences = localStorage.getItem('userPreferences');
         
         if (savedPreferences) {
-          setUserPreferences(JSON.parse(savedPreferences));
+          const parsed = JSON.parse(savedPreferences);
+          
+          // Ensure we have compound preferences (for backward compatibility)
+          if (!parsed.compoundPreferences) {
+            parsed.compoundPreferences = defaultCompoundPreferences;
+          }
+          
+          setUserPreferences(parsed);
         } else {
           // First time user - try to detect some defaults automatically
           await detectDefaultSettings();
@@ -205,11 +221,32 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         featureFlags: {
           ...prev.featureFlags,
           ...(newPrefs.featureFlags || {})
+        },
+        compoundPreferences: {
+          ...prev.compoundPreferences,
+          ...(newPrefs.compoundPreferences || {})
         }
       };
       
       return updated;
     });
+  };
+  
+  // Update only compound preferences
+  const updateCompoundPreferences = async (newPrefs: Partial<CompoundUnitPreferences>): Promise<void> => {
+    setUserPreferences(prev => ({
+      ...prev,
+      compoundPreferences: {
+        ...prev.compoundPreferences,
+        preferredFormats: {
+          ...prev.compoundPreferences.preferredFormats,
+          ...(newPrefs.preferredFormats || {})
+        },
+        recentCompoundConversions: 
+          newPrefs.recentCompoundConversions || 
+          prev.compoundPreferences.recentCompoundConversions
+      }
+    }));
   };
 
   // Reset preferences to defaults
@@ -229,6 +266,28 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     return isPremium() && !!userPreferences.featureFlags?.[featureName as keyof typeof userPreferences.featureFlags];
   };
+  
+  // Get preferred compound format with defaults
+  const getPreferredCompoundFormat = (formatType: CompoundFormatType) => {
+    // Get format config
+    const formatConfig = compoundFormats[formatType];
+    
+    // Get user preferences for this format
+    const userFormatPrefs = userPreferences.compoundPreferences.preferredFormats[formatType];
+    
+    // Determine if enabled
+    const enabled = userFormatPrefs?.enabled ?? true;
+    
+    // Get from/to formats (use custom if set, otherwise defaults)
+    const fromFormat = userFormatPrefs?.customFromFormat || formatConfig.defaultFromFormat;
+    const toFormat = userFormatPrefs?.customToFormat || formatConfig.defaultToFormat;
+    
+    return {
+      enabled,
+      fromFormat,
+      toFormat
+    };
+  };
 
   return (
     <UserContext.Provider
@@ -236,10 +295,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         userPreferences,
         isLoading,
         updatePreferences,
+        updateCompoundPreferences,
         detectUserLocation,
         resetPreferences,
         isPremium,
         hasFeature,
+        getPreferredCompoundFormat,
       }}
     >
       {children}
