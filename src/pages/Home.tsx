@@ -199,6 +199,9 @@ const Home: React.FC = () => {
           <div className="grid grid-cols-2 gap-3">
             {prioritizedCategories.map((category) => {
               const commonConversion = getMostCommonConversion(category.id);
+              const categoryCount = frequentCategories.find(c => c.id === category.id)?.count || 0;
+              const showCategoryCount = categoryCount > 0;
+              
               return (
                 <Link
                   key={category.id}
@@ -209,9 +212,9 @@ const Home: React.FC = () => {
                     <div className={`p-1.5 rounded-full ${category.accentColor}`}>
                       {category.icon}
                     </div>
-                    {frequentCategories.find(c => c.id === category.id)?.count > 0 && (
+                    {showCategoryCount && (
                       <span className="text-xs px-1.5 py-0.5 bg-muted rounded-full text-muted-foreground">
-                        {frequentCategories.find(c => c.id === category.id)?.count || 0}×
+                        {categoryCount}×
                       </span>
                     )}
                   </div>

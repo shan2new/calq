@@ -122,6 +122,14 @@ const Converter: React.FC = () => {
   } | null>(null);
   const swapButtonRef = useRef<HTMLButtonElement>(null);
   const fabRef = useRef<HTMLButtonElement>(null);
+  const isInitialLoadRef = useRef(true);
+  const latestConversionRef = useRef<{
+    fromValue: number;
+    fromUnit: string;
+    toUnit: string;
+    toValue: number;
+    category: string;
+  } | null>(null);
   
   // Get category from URL
   const categoryParam = searchParams.get('category') || UnitCategoryId.LENGTH;
@@ -331,15 +339,29 @@ const Converter: React.FC = () => {
       setFormattedConvertedValue(result.formattedValue);
       setHasConverted(true);
       
-      // Show success animation on significant changes
-      if (
+      // Check if there's a meaningful change from the last conversion
+      const isNewConversion = 
         !lastConversionRef.current ||
         lastConversionRef.current.fromValue !== numValue ||
         lastConversionRef.current.fromUnit !== fromUnit ||
-        lastConversionRef.current.toUnit !== toUnit
-      ) {
+        lastConversionRef.current.toUnit !== toUnit ||
+        lastConversionRef.current.category !== selectedCategory;
+      
+      // Show success animation on significant changes
+      if (isNewConversion) {
         setShowSuccessAnimation(true);
         setTimeout(() => setShowSuccessAnimation(false), 1000);
+        
+        // Store the latest valid conversion in ref (don't add to history yet)
+        if (!isInitialLoadRef.current && numValue !== 0) {
+          latestConversionRef.current = {
+            fromValue: numValue,
+            fromUnit,
+            toUnit,
+            toValue: result.value,
+            category: selectedCategory,
+          };
+        }
       }
       
       // Update last conversion ref
@@ -350,17 +372,6 @@ const Converter: React.FC = () => {
         category: selectedCategory,
       };
       
-      // Add to history
-      if (numValue !== 0) {
-        addToHistory({
-          fromValue: numValue,
-          fromUnit,
-          toUnit,
-          toValue: result.value,
-          category: selectedCategory,
-        });
-      }
-      
     } catch (error) {
       console.error('Conversion failed:', error);
       setConvertedValue(null);
@@ -369,7 +380,17 @@ const Converter: React.FC = () => {
     } finally {
       setIsCalculating(false);
     }
-  }, [fromValue, fromUnit, toUnit, selectedCategory, categoryData, conversionOptions]);
+  }, [fromValue, fromUnit, toUnit, selectedCategory, categoryData, conversionOptions, isInitialLoadRef]);
+  
+  // Add to history when component unmounts if we have a valid conversion
+  useEffect(() => {
+    return () => {
+      // When component unmounts, add the latest conversion to history if it exists
+      if (latestConversionRef.current && !isInitialLoadRef.current) {
+        addToHistory(latestConversionRef.current);
+      }
+    };
+  }, [addToHistory]);
   
   // Debounced conversion function
   const debouncedConversion = useMemo(
@@ -393,10 +414,18 @@ const Converter: React.FC = () => {
     // Use location state to avoid full page reloads
     navigate(`/converter?${newParams.toString()}`, { replace: true });
     
+    // Reset initial load flag after first conversion attempt
+    if (isInitialLoadRef.current && fromUnit && toUnit) {
+      // Use setTimeout to ensure this happens after the initial conversion
+      setTimeout(() => {
+        isInitialLoadRef.current = false;
+      }, 500);
+    }
+    
     return () => {
       debouncedConversion.cancel();
     };
-  }, [fromValue, fromUnit, toUnit, selectedCategory, debouncedConversion]);
+  }, [fromValue, fromUnit, toUnit, selectedCategory, debouncedConversion, navigate]);
   
   // Handle search for units
   const handleSearch = useCallback(debounce(async (query: string) => {

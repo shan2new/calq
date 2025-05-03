@@ -14,6 +14,7 @@ export interface ConversionRecord {
   toValue: number;
   category: string;
   timestamp: number;
+  isFavorite?: boolean;
 }
 
 interface HistoryContextType {
