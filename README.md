@@ -62,7 +62,7 @@ The unit system is designed for comprehensive coverage while maintaining efficie
 ### Installation
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/calcq.git
+git clone https://github.com/shan2new/calcq.git
 cd calcq
 
 # Install dependencies

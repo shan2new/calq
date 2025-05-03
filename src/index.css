@@ -143,11 +143,22 @@
         content: "";
         position: absolute;
         bottom: 0;
-        width: 10px;
-        height: 10px;
+        right: 0px;
+        width: 8px;
+        height: 8px;
         border-radius: 50%;
         background-color: currentColor;
         animation: pulse 2s infinite;
+    }
+
+    /* Add responsive adjustments for mobile */
+    @media (max-width: 768px) {
+        .logo-text .letter-q::after {
+            width: 8px;
+            height: 8px;
+            right: 0px;
+            bottom: 0px;
+        }
     }
 
     /* Subtle animation for the q dot */
