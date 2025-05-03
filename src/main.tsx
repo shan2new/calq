@@ -9,6 +9,7 @@ import { FavoritesProvider } from './contexts/FavoritesContext';
 import { PresetsProvider } from './contexts/PresetsContext';
 import { initializeUserPreferences } from './lib/user-preferences';
 import { preloadFrequentConversionData } from './lib/indexedDB';
+import { Analytics } from "@vercel/analytics/react"
 
 // Initialize user preferences
 initializeUserPreferences();
@@ -61,6 +62,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <FavoritesProvider>
           <PresetsProvider>
             <App />
+            <Analytics />
           </PresetsProvider>
         </FavoritesProvider>
       </HistoryProvider>

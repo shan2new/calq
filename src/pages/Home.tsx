@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Ruler, Scale, Beaker, Thermometer, Square, PlaneTakeoff, Clock, HardDrive, Search, ChevronDown, ChevronUp, Info, History, TrendingUp, Zap } from 'lucide-react';
+import { Ruler, Scale, Beaker, Thermometer, Square, PlaneTakeoff, Clock, HardDrive, ChevronRight, Star, History } from 'lucide-react';
 import { ConversionRecord } from '../contexts/HistoryContext';
 import { getRecentConversions, getRecommendedConversions, getFrequentCategories, preloadFrequentConversionData } from '../lib/indexedDB';
 import { unitCategories } from '../lib/units';
@@ -8,24 +8,31 @@ import { unitCategories } from '../lib/units';
 // Skeleton loaders for quick access sections
 const QuickAccessSkeleton = () => (
   <div className="animate-pulse space-y-4">
-    <div className="h-6 bg-muted rounded w-1/3 mb-2"></div>
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-      {[1, 2, 3].map(i => (
-        <div key={i} className="h-20 bg-muted rounded-lg"></div>
+    <div className="h-5 bg-muted rounded w-1/4 mb-2"></div>
+    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
+      {[1, 2, 3, 4].map(i => (
+        <div key={i} className="h-16 bg-muted rounded-lg min-w-[160px] flex-shrink-0"></div>
       ))}
     </div>
   </div>
 );
 
+// Category card skeleton
+const CategorySkeleton = () => (
+  <div className="grid grid-cols-2 gap-3">
+    {[1, 2, 3, 4].map(i => (
+      <div key={i} className="h-24 bg-muted rounded-lg animate-pulse"></div>
+    ))}
+  </div>
+);
+
 const Home: React.FC = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [featuresExpanded, setFeaturesExpanded] = useState(false);
   const [recentConversions, setRecentConversions] = useState<ConversionRecord[]>([]);
   const [recommendedConversions, setRecommendedConversions] = useState<any[]>([]);
   const [frequentCategories, setFrequentCategories] = useState<{id: string, count: number}[]>([]);
   const [isLoadingRecent, setIsLoadingRecent] = useState(true);
-  const [isLoadingRecommended, setIsLoadingRecommended] = useState(true);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   
   // Load quick access data on mount
   useEffect(() => {
@@ -33,48 +40,35 @@ const Home: React.FC = () => {
       try {
         // Fetch recent conversions
         setIsLoadingRecent(true);
-        const recent = await getRecentConversions(3);
+        const recent = await getRecentConversions(6); // Increased limit to 6
         setRecentConversions(recent);
         setIsLoadingRecent(false);
         
-        // Fetch recommended conversions based on usage patterns
-        setIsLoadingRecommended(true);
-        const recommendations = await getRecommendedConversions(3);
-        setRecommendedConversions(recommendations);
-        
         // Fetch frequently used categories
-        const categories = await getFrequentCategories(4);
+        setIsLoadingCategories(true);
+        const categories = await getFrequentCategories(8);
         setFrequentCategories(categories);
-        setIsLoadingRecommended(false);
+        
+        // Fetch recommended conversions in background
+        const recommendations = await getRecommendedConversions(4);
+        setRecommendedConversions(recommendations);
+        setIsLoadingCategories(false);
         
         // Preload additional data in the background
         preloadFrequentConversionData();
       } catch (error) {
         console.error('Error loading quick access data:', error);
         setIsLoadingRecent(false);
-        setIsLoadingRecommended(false);
+        setIsLoadingCategories(false);
       }
     };
     
     loadQuickAccessData();
   }, []);
   
-  // Handle search submission
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/converter?search=${encodeURIComponent(searchQuery.trim())}`);
-    }
-  };
-  
   // Handle quick conversion selection
   const handleQuickConvert = (record: ConversionRecord) => {
     navigate(`/converter?category=${record.category}&from=${record.fromUnit}&to=${record.toUnit}&value=${record.fromValue}`);
-  };
-  
-  // Handle recommended conversion selection
-  const handleRecommendedConvert = (record: any) => {
-    navigate(`/converter?category=${record.category}&from=${record.fromUnit}&to=${record.toUnit}`);
   };
   
   // Get unit name from ID
@@ -116,235 +110,142 @@ const Home: React.FC = () => {
     { id: 'digital', name: 'Digital', icon: <HardDrive className="w-5 h-5" />, accentColor: 'bg-sky-500/10 text-sky-600 dark:text-sky-400' },
   ];
   
-  // Filter categories based on search query
-  const filteredCategories = searchQuery.trim()
-    ? conversionCategories.filter(category => 
-        category.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    : conversionCategories;
-    
   // Get prioritized categories (frequent if available, otherwise default)
   const prioritizedCategories = frequentCategories.length > 0
     ? frequentCategories.map(freq => {
         const category = conversionCategories.find(cat => cat.id === freq.id);
         return category || conversionCategories[0]; // Fallback to first category if not found
       })
-    : conversionCategories.slice(0, 4);
+    : conversionCategories.slice(0, 8);
+    
+  // Get most commonly used unit conversion for a category
+  const getMostCommonConversion = (categoryId: string) => {
+    const categoryRecommendations = recommendedConversions.filter(r => r.category === categoryId);
+    if (categoryRecommendations.length > 0) {
+      const topRecommendation = categoryRecommendations[0];
+      return `${getUnitName(categoryId, topRecommendation.fromUnit)} → ${getUnitName(categoryId, topRecommendation.toUnit)}`;
+    }
+    return null;
+  };
   
   return (
-    <div className="space-y-8 pb-20 md:pb-0">
-      {/* Hero section */}
-      <div className="flex flex-col items-center text-center space-y-4 py-6">
-        <h1 className="text-3xl font-bold">Calcq</h1>
-        <p className="text-muted-foreground max-w-md">
-          Fast, accurate unit conversions across multiple categories
-        </p>
-        
-        {/* Search bar */}
-        <form onSubmit={handleSearch} className="w-full max-w-lg relative">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search units or categories..."
-            className="w-full px-3 py-2 pr-10 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-            aria-label="Search for units or categories"
-          />
-          <button 
-            type="submit" 
-            className="absolute right-0 top-0 h-full px-3 text-muted-foreground hover:text-primary transition-colors"
-            aria-label="Submit search"
-          >
-            <Search className="w-4 h-4" />
-          </button>
-        </form>
-      </div>
-      
-      {/* Quick Access - Recent Conversions */}
-      {(isLoadingRecent || recentConversions.length > 0) && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center mb-2">
-            <div className="flex items-center gap-2">
-              <History className="w-4 h-4 text-primary" aria-hidden="true" />
-              <h2 className="text-lg font-semibold">Recent Conversions</h2>
-            </div>
-            <Link to="/history" className="text-sm text-primary hover:underline">
-              View all
-            </Link>
+    <div className="space-y-6 pb-20 md:pb-0">
+      {/* Quick Access - Recent & Favorite Conversions */}
+      <div className="space-y-4 mt-2">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <History className="w-4 h-4 text-primary" aria-hidden="true" />
+            <h2 className="text-lg font-medium">Quick Conversions</h2>
           </div>
-          
-          {isLoadingRecent ? (
-            <QuickAccessSkeleton />
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {recentConversions.map((record) => {
-                const { accentColor, icon } = getCategoryStyle(record.category);
-                return (
-                  <button
-                    key={record.id}
-                    onClick={() => handleQuickConvert(record)}
-                    className="flex flex-col p-3 bg-card border border-border rounded-lg hover:bg-muted/50 hover:border-primary/50 transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 text-left"
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <div className={`p-1.5 rounded-full ${accentColor}`}>
-                        {icon}
-                      </div>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(record.timestamp).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <div className="mt-1">
-                      <div className="flex items-center gap-1">
-                        <span className="font-medium">{record.fromValue}</span>
-                        <span className="text-sm text-muted-foreground">{getUnitName(record.category, record.fromUnit)}</span>
-                        <span className="text-muted-foreground mx-1">→</span>
-                        <span className="font-medium">{record.toValue}</span>
-                        <span className="text-sm text-muted-foreground">{getUnitName(record.category, record.toUnit)}</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">{getCategoryName(record.category)}</p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-      
-      {/* Smart Recommendations */}
-      {(isLoadingRecommended || recommendedConversions.length > 0) && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center mb-2">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-primary" aria-hidden="true" />
-              <h2 className="text-lg font-semibold">Recommended For You</h2>
-            </div>
-            <div className="text-xs px-2 py-0.5 bg-muted rounded-full text-muted-foreground">
-              Based on usage
-            </div>
-          </div>
-          
-          {isLoadingRecommended ? (
-            <QuickAccessSkeleton />
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {recommendedConversions.map((record) => {
-                const { accentColor, icon } = getCategoryStyle(record.category);
-                return (
-                  <button
-                    key={record.id}
-                    onClick={() => handleRecommendedConvert(record)}
-                    className="flex flex-col p-3 bg-card border border-border rounded-lg hover:bg-muted/50 hover:border-primary/50 transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 text-left"
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <div className={`p-1.5 rounded-full ${accentColor}`}>
-                        {icon}
-                      </div>
-                      <span className="text-xs flex items-center gap-1 text-amber-500">
-                        <Zap className="w-3 h-3" />
-                        <span>Used {record.count} times</span>
-                      </span>
-                    </div>
-                    <div className="mt-1">
-                      <div className="flex items-center gap-1">
-                        <span className="text-sm">{getUnitName(record.category, record.fromUnit)}</span>
-                        <span className="text-muted-foreground mx-1">→</span>
-                        <span className="text-sm">{getUnitName(record.category, record.toUnit)}</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">{getCategoryName(record.category)}</p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-      
-      {/* Categories section */}
-      <div className="space-y-4">
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="text-xl font-semibold">Popular Categories</h2>
-          <Link to="/converter" className="text-sm text-primary hover:underline">
+          <Link to="/history" className="text-sm text-primary hover:underline flex items-center">
             View all
+            <ChevronRight className="w-3 h-3 ml-1" />
           </Link>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-          {filteredCategories.length > 0 ? (
-            (searchQuery ? filteredCategories : prioritizedCategories).map((category) => (
-              <Link
-                key={category.id}
-                to={`/converter?category=${category.id}`}
-                className="flex flex-col items-center p-3 bg-card border border-border rounded-lg hover:bg-muted/50 hover:border-primary/50 transition-all focus:outline-none focus:ring-2 focus:ring-primary/50"
-                aria-label={`Convert ${category.name}`}
-              >
-                <div className={`mb-2 p-1.5 rounded-full ${category.accentColor}`}>{category.icon}</div>
-                <span className="text-sm font-medium">{category.name}</span>
-              </Link>
-            ))
-          ) : (
-            <div className="col-span-full text-center py-4 text-muted-foreground">
-              No matching categories found
-            </div>
-          )}
-        </div>
-      </div>
-      
-      {/* Features section as collapsible accordion */}
-      <div className="bg-card border border-border rounded-lg">
-        <button 
-          onClick={() => setFeaturesExpanded(!featuresExpanded)}
-          className="w-full px-5 py-4 flex items-center justify-between text-foreground focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/50"
-          aria-expanded={featuresExpanded}
-          aria-controls="features-content"
-        >
-          <div className="flex items-center">
-            <Info className="w-4 h-4 mr-2 text-primary" aria-hidden="true" />
-            <h2 className="text-lg font-semibold">Why Calcq?</h2>
-          </div>
-          {featuresExpanded ? 
-            <ChevronUp className="w-4 h-4 text-muted-foreground" aria-hidden="true" /> : 
-            <ChevronDown className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
-          }
-        </button>
         
-        {featuresExpanded && (
-          <div 
-            id="features-content" 
-            className="px-5 pb-5 pt-1 border-t border-border"
-          >
-            <ul className="space-y-3">
-              <li className="flex items-start">
-                <div className="mr-3 mt-1 text-primary">✓</div>
-                <div>
-                  <span className="font-medium">Comprehensive Unit Library</span>
-                  <p className="text-sm text-muted-foreground">Access a wide range of measurement units for all your conversion needs</p>
-                </div>
-              </li>
-              <li className="flex items-start">
-                <div className="mr-3 mt-1 text-primary">✓</div>
-                <div>
-                  <span className="font-medium">Smart Recommendations</span>
-                  <p className="text-sm text-muted-foreground">Get personalized suggestions based on your usage patterns</p>
-                </div>
-              </li>
-              <li className="flex items-start">
-                <div className="mr-3 mt-1 text-primary">✓</div>
-                <div>
-                  <span className="font-medium">Save Favorites</span>
-                  <p className="text-sm text-muted-foreground">Bookmark frequent conversions for faster access</p>
-                </div>
-              </li>
-              <li className="flex items-start">
-                <div className="mr-3 mt-1 text-primary">✓</div>
-                <div>
-                  <span className="font-medium">Offline Support</span>
-                  <p className="text-sm text-muted-foreground">Convert units anytime, even without an internet connection</p>
-                </div>
-              </li>
-            </ul>
+        {isLoadingRecent ? (
+          <QuickAccessSkeleton />
+        ) : recentConversions.length > 0 ? (
+          <div className="flex gap-3 overflow-x-auto pb-2 snap-x scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+            {recentConversions.map((record) => {
+              const { accentColor, icon } = getCategoryStyle(record.category);
+              return (
+                <button
+                  key={record.id}
+                  onClick={() => handleQuickConvert(record)}
+                  className="flex-shrink-0 snap-start min-w-[180px] p-3 bg-card border border-border rounded-lg hover:bg-muted/50 hover:border-primary/30 transition-all focus:outline-none focus:ring-2 focus:ring-primary/30 text-left"
+                >
+                  <div className="flex justify-between items-start mb-1.5">
+                    <div className={`p-1.5 rounded-full ${accentColor}`}>
+                      {icon}
+                    </div>
+                    {record.isFavorite && (
+                      <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="flex flex-col">
+                      <div className="flex items-center text-sm">
+                        <span className="font-medium truncate">{record.fromValue}</span>
+                        <span className="text-xs text-muted-foreground ml-1 truncate">{getUnitName(record.category, record.fromUnit)}</span>
+                      </div>
+                      <div className="flex items-center text-sm">
+                        <span className="font-medium truncate">{record.toValue}</span>
+                        <span className="text-xs text-muted-foreground ml-1 truncate">{getUnitName(record.category, record.toUnit)}</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1 truncate">{getCategoryName(record.category)}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="bg-muted/30 rounded-lg p-4 text-center text-sm text-muted-foreground">
+            Your recent conversions will appear here
           </div>
         )}
       </div>
+      
+      {/* Categories Grid */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h2 className="text-lg font-medium">Categories</h2>
+        </div>
+        
+        {isLoadingCategories ? (
+          <CategorySkeleton />
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {prioritizedCategories.map((category) => {
+              const commonConversion = getMostCommonConversion(category.id);
+              return (
+                <Link
+                  key={category.id}
+                  to={`/converter?category=${category.id}`}
+                  className="flex flex-col p-3 bg-card border border-border rounded-lg hover:bg-muted/50 hover:border-primary/30 transition-all focus:outline-none focus:ring-2 focus:ring-primary/30"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className={`p-1.5 rounded-full ${category.accentColor}`}>
+                      {category.icon}
+                    </div>
+                    {frequentCategories.find(c => c.id === category.id)?.count > 0 && (
+                      <span className="text-xs px-1.5 py-0.5 bg-muted rounded-full text-muted-foreground">
+                        {frequentCategories.find(c => c.id === category.id)?.count || 0}×
+                      </span>
+                    )}
+                  </div>
+                  <span className="font-medium">{category.name}</span>
+                  {commonConversion && (
+                    <span className="text-xs text-muted-foreground mt-1 truncate">{commonConversion}</span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      
+      {/* Contextual Widget */}
+      {recommendedConversions.length > 0 && (
+        <div className="bg-muted/20 border border-border rounded-lg p-4 space-y-2">
+          <h3 className="font-medium">Did you know?</h3>
+          <p className="text-sm text-muted-foreground">
+            Your most used conversion is {' '}
+            <span className="font-medium text-foreground">
+              {getUnitName(recommendedConversions[0].category, recommendedConversions[0].fromUnit)} → {getUnitName(recommendedConversions[0].category, recommendedConversions[0].toUnit)}
+            </span>{' '}
+            ({getCategoryName(recommendedConversions[0].category)})
+          </p>
+          <Link 
+            to={`/converter?category=${recommendedConversions[0].category}&from=${recommendedConversions[0].fromUnit}&to=${recommendedConversions[0].toUnit}`}
+            className="text-sm text-primary hover:underline flex items-center mt-1"
+          >
+            Use this conversion
+            <ChevronRight className="w-3 h-3 ml-1" />
+          </Link>
+        </div>
+      )}
     </div>
   );
 };
