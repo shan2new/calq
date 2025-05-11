@@ -22,6 +22,10 @@ export async function generateSitemap() {
     generateConversionSitemap(outputDir, baseUrl),
     generateImageSitemap(outputDir, baseUrl),
     generateBlogSitemap(outputDir, baseUrl),
+    generateNewsSitemap(outputDir, baseUrl),
+    generateVideoSitemap(outputDir, baseUrl),
+    generateMobileSitemap(outputDir, baseUrl),
+    generateHreflangSitemap(outputDir, baseUrl),
     generateSitemapIndex(outputDir, baseUrl)
   ]);
   
@@ -55,7 +59,10 @@ async function generateCategorySitemap(outputDir, baseUrl) {
   // Sample categories - in production, get these from your actual data
   const sampleCategories = [
     'length', 'mass', 'volume', 'temperature', 
-    'time', 'speed', 'area', 'data', 'energy'
+    'time', 'speed', 'area', 'data', 'energy',
+    'pressure', 'angle', 'force', 'power', 'fuel',
+    'current', 'voltage', 'frequency', 'acceleration',
+    'digital-storage', 'typography', 'luminance'
   ];
   
   // Add category pages
@@ -114,16 +121,50 @@ function getCommonConversionsForCategory(category) {
       { from: 'meter', to: 'foot' },
       { from: 'kilometer', to: 'mile' },
       { from: 'centimeter', to: 'inch' },
+      { from: 'meter', to: 'yard' },
+      { from: 'millimeter', to: 'inch' }
     ],
     'mass': [
       { from: 'kilogram', to: 'pound' },
       { from: 'gram', to: 'ounce' },
+      { from: 'metric-ton', to: 'us-ton' },
+      { from: 'kilogram', to: 'stone' }
     ],
     'temperature': [
       { from: 'celsius', to: 'fahrenheit' },
       { from: 'kelvin', to: 'celsius' },
+      { from: 'fahrenheit', to: 'kelvin' }
     ],
-    // Add more category conversions as needed
+    'volume': [
+      { from: 'liter', to: 'gallon' },
+      { from: 'milliliter', to: 'fluid-ounce' },
+      { from: 'cubic-meter', to: 'cubic-foot' }
+    ],
+    'area': [
+      { from: 'square-meter', to: 'square-foot' },
+      { from: 'hectare', to: 'acre' },
+      { from: 'square-kilometer', to: 'square-mile' }
+    ],
+    'time': [
+      { from: 'second', to: 'minute' },
+      { from: 'hour', to: 'day' },
+      { from: 'day', to: 'week' }
+    ],
+    'speed': [
+      { from: 'kilometer-per-hour', to: 'mile-per-hour' },
+      { from: 'meter-per-second', to: 'foot-per-second' },
+      { from: 'knot', to: 'mile-per-hour' }
+    ],
+    'data': [
+      { from: 'megabyte', to: 'gigabyte' },
+      { from: 'kilobyte', to: 'megabyte' },
+      { from: 'gigabyte', to: 'terabyte' }
+    ],
+    'energy': [
+      { from: 'joule', to: 'calorie' },
+      { from: 'kilowatt-hour', to: 'joule' },
+      { from: 'electron-volt', to: 'joule' }
+    ]
   };
   
   return commonConversions[category] || [];
@@ -136,7 +177,11 @@ async function generateImageSitemap(outputDir, baseUrl) {
     { url: `${baseUrl}/convert/length/meter/foot`, image: '/images/conversions/meter-to-foot.webp' },
     { url: `${baseUrl}/convert/temperature/celsius/fahrenheit`, image: '/images/conversions/celsius-to-fahrenheit.webp' },
     { url: `${baseUrl}/convert/mass/kilogram/pound`, image: '/images/conversions/kilogram-to-pound.webp' },
-    { url: `${baseUrl}/convert/volume/liter/gallon`, image: '/images/conversions/liter-to-gallon.webp' }
+    { url: `${baseUrl}/convert/volume/liter/gallon`, image: '/images/conversions/liter-to-gallon.webp' },
+    { url: `${baseUrl}/blog/why-metric-system-worldwide`, image: '/images/blog/metric-system-map.webp' },
+    { url: `${baseUrl}/blog/common-conversion-mistakes`, image: '/images/blog/conversion-mistakes.webp' },
+    { url: `${baseUrl}/blog/recipe-measurements-abroad`, image: '/images/blog/international-cooking.webp' },
+    { url: `${baseUrl}/blog/unit-conversion-history`, image: '/images/blog/ancient-measurements.webp' }
   ];
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
@@ -182,6 +227,18 @@ async function generateBlogSitemap(outputDir, baseUrl) {
       lastmod: '2023-04-18',
       changefreq: 'monthly',
       priority: '0.7'
+    },
+    {
+      slug: 'imperial-vs-metric-system',
+      lastmod: '2023-05-22',
+      changefreq: 'monthly',
+      priority: '0.8'
+    },
+    {
+      slug: 'temperature-conversion-guide',
+      lastmod: '2023-06-10',
+      changefreq: 'monthly',
+      priority: '0.8'
     }
   ];
   
@@ -197,6 +254,145 @@ ${blogPosts.map(post => `  <url>
 
   fs.writeFileSync(path.resolve(outputDir, 'sitemap-blog.xml'), sitemap);
   console.log('Blog sitemap generated successfully');
+}
+
+// Generate sitemap for news articles (for Google News)
+async function generateNewsSitemap(outputDir, baseUrl) {
+  // Recent news articles
+  const newsArticles = [
+    {
+      title: 'New SI Units Announced by International Bureau',
+      slug: 'new-si-units-announced',
+      publication_date: '2023-09-14T08:30:00+00:00'
+    },
+    {
+      title: 'US Considering Metric System for Federal Projects',
+      slug: 'us-considering-metric-system',
+      publication_date: '2023-09-10T14:15:00+00:00'
+    }
+  ];
+
+  const newsDate = new Date().toISOString().split('T')[0];
+
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
+${newsArticles.map(article => `  <url>
+    <loc>${baseUrl}/news/${article.slug}</loc>
+    <news:news>
+      <news:publication>
+        <news:name>Calcq</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>${article.publication_date}</news:publication_date>
+      <news:title>${article.title}</news:title>
+    </news:news>
+  </url>`).join('\n')}
+</urlset>`;
+
+  fs.writeFileSync(path.resolve(outputDir, 'sitemap-news.xml'), sitemap);
+  console.log('News sitemap generated successfully');
+}
+
+// Generate sitemap for video content
+async function generateVideoSitemap(outputDir, baseUrl) {
+  // Video tutorials
+  const videoContent = [
+    {
+      title: 'How to Convert Units of Measurement',
+      slug: 'how-to-convert-units',
+      thumbnail: '/videos/thumbnails/how-to-convert.jpg',
+      description: 'A complete tutorial on converting units of measurement with Calcq',
+      content_loc: '/videos/how-to-convert-units.mp4',
+      player_loc: 'https://www.youtube.com/embed/abc123',
+      duration: 320 // seconds
+    },
+    {
+      title: 'Understanding the Metric System',
+      slug: 'understanding-metric-system',
+      thumbnail: '/videos/thumbnails/metric-system.jpg',
+      description: 'Learn all about the metric system and why it\'s used worldwide',
+      content_loc: '/videos/metric-system-explained.mp4',
+      player_loc: 'https://www.youtube.com/embed/def456',
+      duration: 450 // seconds
+    }
+  ];
+
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+${videoContent.map(video => `  <url>
+    <loc>${baseUrl}/videos/${video.slug}</loc>
+    <video:video>
+      <video:thumbnail_loc>${baseUrl}${video.thumbnail}</video:thumbnail_loc>
+      <video:title>${video.title}</video:title>
+      <video:description>${video.description}</video:description>
+      <video:content_loc>${baseUrl}${video.content_loc}</video:content_loc>
+      <video:player_loc>${video.player_loc}</video:player_loc>
+      <video:duration>${video.duration}</video:duration>
+      <video:family_friendly>yes</video:family_friendly>
+      <video:live>no</video:live>
+    </video:video>
+  </url>`).join('\n')}
+</urlset>`;
+
+  fs.writeFileSync(path.resolve(outputDir, 'sitemap-videos.xml'), sitemap);
+  console.log('Video sitemap generated successfully');
+}
+
+// Generate mobile-specific sitemap
+async function generateMobileSitemap(outputDir, baseUrl) {
+  // Mobile-optimized pages
+  const mobileUrls = [
+    `${baseUrl}/mobile/converter`,
+    `${baseUrl}/mobile/historical-rates`,
+    `${baseUrl}/mobile/offline-mode`
+  ];
+
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0">
+${mobileUrls.map(url => `  <url>
+    <loc>${url}</loc>
+    <mobile:mobile/>
+  </url>`).join('\n')}
+</urlset>`;
+
+  fs.writeFileSync(path.resolve(outputDir, 'sitemap-mobile.xml'), sitemap);
+  console.log('Mobile sitemap generated successfully');
+}
+
+// Generate hreflang sitemap for internationalized content
+async function generateHreflangSitemap(outputDir, baseUrl) {
+  // Pages with language alternatives
+  const pages = [
+    {
+      path: '/',
+      languages: [
+        { code: 'en', url: `${baseUrl}/` },
+        { code: 'es', url: `${baseUrl}/es/` },
+        { code: 'fr', url: `${baseUrl}/fr/` },
+        { code: 'de', url: `${baseUrl}/de/` }
+      ]
+    },
+    {
+      path: '/convert/length/meter/foot',
+      languages: [
+        { code: 'en', url: `${baseUrl}/convert/length/meter/foot` },
+        { code: 'es', url: `${baseUrl}/es/convertir/longitud/metro/pie` },
+        { code: 'fr', url: `${baseUrl}/fr/convertir/longueur/metre/pied` },
+        { code: 'de', url: `${baseUrl}/de/umrechnen/lange/meter/fuss` }
+      ]
+    }
+  ];
+
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+${pages.map(page => `  <url>
+    <loc>${baseUrl}${page.path}</loc>
+${page.languages.map(lang => `    <xhtml:link rel="alternate" hreflang="${lang.code}" href="${lang.url}" />`).join('\n')}
+  </url>`).join('\n')}
+</urlset>`;
+
+  fs.writeFileSync(path.resolve(outputDir, 'sitemap-hreflang.xml'), sitemap);
+  console.log('Hreflang sitemap generated successfully');
 }
 
 // Generate sitemap index file
@@ -226,6 +422,26 @@ async function generateSitemapIndex(outputDir, baseUrl) {
       name: 'sitemap-images.xml',
       lastmod: new Date().toISOString().split('T')[0],
       priority: 0.5
+    },
+    {
+      name: 'sitemap-news.xml',
+      lastmod: new Date().toISOString().split('T')[0],
+      priority: 0.9
+    },
+    {
+      name: 'sitemap-videos.xml',
+      lastmod: new Date().toISOString().split('T')[0],
+      priority: 0.6
+    },
+    {
+      name: 'sitemap-mobile.xml',
+      lastmod: new Date().toISOString().split('T')[0],
+      priority: 0.7
+    },
+    {
+      name: 'sitemap-hreflang.xml',
+      lastmod: new Date().toISOString().split('T')[0],
+      priority: 0.8
     }
   ];
 

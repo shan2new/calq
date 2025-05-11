@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import MetadataManager from '../components/SEO/MetadataManager';
 import { ArticleStructuredData, FAQStructuredData } from '../components/SEO/StructuredData';
-import { ResponsiveImage } from '../components/ui/ResponsiveImage';
-import { Breadcrumbs, BreadcrumbsStructuredData, generateConversionBreadcrumbs } from '../components/SEO/Breadcrumbs';
+import OptimizedImage from '../components/ui/OptimizedImage';
+import { Breadcrumbs, BreadcrumbsStructuredData } from '../components/SEO/Breadcrumbs';
 
 // Sample blog posts - in a real implementation, this would come from a CMS or API
 const blogPosts = {
@@ -13,56 +13,30 @@ const blogPosts = {
     slug: 'why-metric-system-worldwide',
     excerpt: 'Learn about the history and politics behind why most of the world uses the metric system, while the US still primarily uses imperial measurements.',
     content: `
-      <h2>The Global Standard That America Skipped</h2>
-      <p>The metric system, officially known as the International System of Units (SI), is used by nearly every country in the world—with the United States being the notable exception. This article explores why the metric system became the global standard and why the US continues to primarily use customary units (the imperial system).</p>
+      <p>In 1799, France introduced the world to the metric system as a standardized way of measurement. Today, nearly every country in the world uses the metric system as their official system of weights and measures, with the United States being a notable exception.</p>
       
-      <h2>A Brief History of the Metric System</h2>
-      <p>The metric system originated during the French Revolution in the late 18th century. It was designed as a rational, decimal-based system of measurement that would be "for all people, for all time." Unlike earlier systems that were based on arbitrary standards like the length of a king's foot, the metric system was intended to be based on natural constants.</p>
+      <h2>The Birth of the Metric System</h2>
+      <p>The metric system originated during the French Revolution as a way to streamline and standardize measurements across the country. Before this, measurements varied widely between regions, making trade and communication difficult. The new system was based on decimal units and natural constants, making it scientifically sound and easy to convert between units.</p>
       
-      <p>In 1875, the Treaty of the Meter was signed by 17 nations, establishing the International Bureau of Weights and Measures. This organization was tasked with maintaining international standards for measurement and promoting the adoption of the metric system worldwide.</p>
+      <h2>Global Adoption</h2>
+      <p>Throughout the 19th and 20th centuries, countries around the world began to adopt the metric system. Its logical structure and ease of use in scientific and technical fields made it increasingly attractive as international trade grew.</p>
       
-      <h2>Why Did Most Countries Adopt the Metric System?</h2>
-      <p>The metric system offered several advantages that led to its widespread adoption:</p>
+      <h2>Why the US Hasn't Fully Converted</h2>
+      <p>The United States actually has an interesting history with the metric system. In 1975, Congress passed the Metric Conversion Act, which declared the metric system "the preferred system of weights and measures for United States trade and commerce." However, the act was voluntary, and the expected transition never fully materialized.</p>
+      
+      <p>Several factors have contributed to the US's continued use of imperial measurements:</p>
+      
       <ul>
-        <li>Decimal-based units that make calculations simpler</li>
-        <li>Standardized prefixes (milli-, centi-, kilo-, etc.) that apply across all types of measurements</li>
-        <li>Coherent relationships between units (e.g., 1 cubic centimeter of water equals 1 milliliter and weighs 1 gram)</li>
-        <li>International standardization that facilitates trade and scientific exchange</li>
+        <li>The cost of transitioning infrastructure, tools, and manufacturing processes</li>
+        <li>Cultural resistance to change</li>
+        <li>The fact that many US industries that operate globally already use the metric system internally</li>
       </ul>
       
-      <p>Countries typically adopted the metric system during periods of significant political change or modernization. For example, many European nations adopted the system during the 19th century, while countries in Asia and Africa often adopted it upon gaining independence in the 20th century.</p>
+      <h2>The Hybrid Approach</h2>
+      <p>Interestingly, the US operates on a hybrid system. Many scientific fields, medicine, and the military exclusively use metric units. Liquor and wine are sold in metric volumes, and nutrition labels display both systems.</p>
       
-      <h2>The United States: A Metric Holdout</h2>
-      <p>The United States has had a complicated relationship with the metric system. In 1975, Congress passed the Metric Conversion Act, which declared the metric system "the preferred system of weights and measures for United States trade and commerce." However, the act made the conversion voluntary, not mandatory.</p>
-      
-      <p>Several factors have contributed to America's resistance to full metric adoption:</p>
-      <ul>
-        <li>The cost of converting infrastructure, tools, and manufacturing processes</li>
-        <li>Cultural inertia and familiarity with customary units</li>
-        <li>Decentralized governance that makes nationwide standardization difficult</li>
-        <li>The perception that the metric system is "foreign" or "un-American"</li>
-      </ul>
-      
-      <p>Despite these barriers, the metric system is actually widely used in specific sectors within the United States. American scientists, the military, and many industries (especially those that operate globally) use metric units extensively.</p>
-      
-      <h2>Partial Metrication in America</h2>
-      <p>The U.S. is actually more metricated than many Americans realize:</p>
-      <ul>
-        <li>Food and beverages are often labeled in both systems (e.g., 2-liter soda bottles)</li>
-        <li>Pharmaceuticals and medical dosing use exclusively metric measurements</li>
-        <li>The U.S. dollar is decimal-based, unlike the old British pound with its shillings and pence</li>
-        <li>American athletes compete in metric distances (100-meter dash, etc.) at the Olympics</li>
-      </ul>
-      
-      <h2>Will the US Ever Fully Convert?</h2>
-      <p>Complete conversion to the metric system in the United States seems unlikely in the near future. The current dual-system approach—where both systems coexist in different contexts—appears to be the path of least resistance, even if it occasionally leads to confusion and errors.</p>
-      
-      <p>Perhaps the most famous such error occurred in 1999, when NASA lost the $125 million Mars Climate Orbiter because one team used metric units while another used imperial units in their calculations.</p>
-      
-      <h2>Conclusion</h2>
-      <p>The metric system continues to be the international standard for measurement, with the United States as the only major country that has not fully adopted it. While this exceptionalism creates some inefficiencies and occasional errors, Americans have largely adapted to living in a world with two parallel systems of measurement.</p>
-      
-      <p>For those dealing with international contexts or scientific work, understanding both systems and being able to convert between them remains an essential skill—and one that Americans may need to maintain longer than citizens of most other countries.</p>
+      <h2>The Importance of Conversion Tools</h2>
+      <p>With two systems in use worldwide, conversion tools like Calcq play an essential role in bridging the measurement gap. Whether you're following a recipe from another country, working on an international project, or trying to understand weather forecasts while traveling, reliable conversion between imperial and metric units remains critical.</p>
     `,
     category: 'History',
     coverImage: '/images/blog/metric-system-map.jpg',
@@ -71,26 +45,23 @@ const blogPosts = {
     modifiedDate: '2023-01-20',
     readTime: '6 min read',
     tags: ['metric', 'imperial', 'history', 'measurements'],
-    relatedArticles: ['common-conversion-mistakes', 'unit-conversion-history'],
+    relatedArticles: ['common-conversion-mistakes', 'recipe-measurements-abroad'],
     faqs: [
       {
-        question: "Why doesn't the US use the metric system?",
-        answer: "The US hasn't fully adopted the metric system due to several factors including the high cost of converting infrastructure, cultural inertia, decentralized governance making nationwide standardization difficult, and the perception that the metric system is 'foreign'."
+        question: 'When was the metric system invented?',
+        answer: 'The metric system was invented in France in 1799 during the French Revolution as a standardized measurement system based on decimal units.'
       },
       {
-        question: "When was the metric system invented?",
-        answer: "The metric system originated during the French Revolution in the late 18th century (1790s) as a rational, decimal-based system of measurement."
+        question: 'Why doesn\'t the US use the metric system?',
+        answer: 'While the US officially recognizes the metric system, it hasn\'t fully transitioned due to factors like the cost of infrastructure changes, cultural resistance, and the fact that many industries already use metric internally.'
       },
       {
-        question: "Do any other countries besides the US not use the metric system?",
-        answer: "While the US is the most notable non-metric country, Myanmar (Burma) and Liberia have also not fully adopted the metric system, though they use it in some contexts."
-      },
-      {
-        question: "Does the US use the metric system at all?",
-        answer: "Yes, the US uses the metric system in many scientific, medical, military, and industrial contexts. Many products are labeled with both systems, and certain industries are fully metric."
+        question: 'Do any other countries besides the US not use the metric system?',
+        answer: 'Myanmar (Burma) and Liberia are the only other countries that haven\'t officially adopted the metric system, though both use it in some contexts.'
       }
     ]
   },
+  
   'common-conversion-mistakes': {
     id: 'common-conversion-mistakes',
     title: '10 Common Unit Conversion Mistakes to Avoid',
@@ -119,8 +90,8 @@ const BlogPost: React.FC = () => {
   useEffect(() => {
     // Simulate API call delay
     const timer = setTimeout(() => {
-      if (slug && blogPosts[slug]) {
-        setPost(blogPosts[slug]);
+      if (slug && blogPosts[slug as keyof typeof blogPosts]) {
+        setPost(blogPosts[slug as keyof typeof blogPosts]);
       }
       setLoading(false);
     }, 500);
@@ -170,7 +141,6 @@ const BlogPost: React.FC = () => {
         title={`${post.title} | Calcq Blog`}
         description={post.excerpt}
         keywords={post.tags.join(', ')}
-        imageUrl={`https://calcq.app${post.coverImage}`}
         publishedTime={post.publishedDate}
         modifiedTime={post.modifiedDate}
       />
@@ -213,7 +183,7 @@ const BlogPost: React.FC = () => {
       
       {/* Cover image */}
       <div className="mb-8 rounded-lg overflow-hidden">
-        <ResponsiveImage
+        <OptimizedImage
           src={post.coverImage}
           alt={post.title}
           width={1200}
@@ -229,7 +199,7 @@ const BlogPost: React.FC = () => {
       <div className="mb-8">
         <h2 className="text-lg font-medium mb-3">Tags</h2>
         <div className="flex flex-wrap gap-2">
-          {post.tags.map(tag => (
+          {post.tags.map((tag: string) => (
             <Link key={tag} to={`/blog/tag/${tag}`} className="px-3 py-1 bg-muted rounded-full text-sm hover:bg-muted/70">
               #{tag}
             </Link>
@@ -242,14 +212,14 @@ const BlogPost: React.FC = () => {
         <div className="border-t pt-8 mt-8">
           <h2 className="text-2xl font-bold mb-6">Related Articles</h2>
           <div className="grid md:grid-cols-2 gap-6">
-            {post.relatedArticles.map(relatedSlug => {
-              const relatedPost = blogPosts[relatedSlug];
+            {post.relatedArticles.map((relatedSlug: string) => {
+              const relatedPost = blogPosts[relatedSlug as keyof typeof blogPosts];
               if (!relatedPost) return null;
               
               return (
                 <div key={relatedSlug} className="bg-card border rounded-lg overflow-hidden flex flex-col">
                   <div className="h-40 relative">
-                    <ResponsiveImage
+                    <OptimizedImage
                       src={relatedPost.coverImage}
                       alt={relatedPost.title}
                       width={600}
@@ -275,14 +245,11 @@ const BlogPost: React.FC = () => {
       )}
       
       {/* Call to action */}
-      <div className="bg-card border rounded-lg p-6 mt-12 text-center">
-        <h2 className="text-2xl font-bold mb-2">Need Help With Unit Conversions?</h2>
-        <p className="mb-6">Try our free unit converter for quick, accurate calculations</p>
-        <Link 
-          to="/converter"
-          className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-        >
-          Use The Converter
+      <div className="bg-muted p-6 rounded-lg mb-12">
+        <h3 className="text-xl font-bold mb-3">Need to Convert Units?</h3>
+        <p className="mb-4">Try our accurate and easy-to-use calculator for all your conversion needs.</p>
+        <Link to="/converter" className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
+          Use Calculator
         </Link>
       </div>
     </div>
