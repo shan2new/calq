@@ -1072,15 +1072,6 @@ const Converter: React.FC<{
                   </div>
                 )}
                 
-                {/* Educational unit information */}
-                {toUnit && (
-                  <div className="mt-8 pt-6 border-t border-border">
-                    <UnitInformation
-                      unitId={toUnit}
-                      categoryId={selectedCategory}
-                    />
-                  </div>
-                )}
               </div>
             </div>
             
