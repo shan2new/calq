@@ -1,6 +1,36 @@
+# Allow all web crawlers
 User-agent: *
 Allow: /
-Disallow: /api/
-Disallow: /history/
 
-Sitemap: https://calcq.app/sitemap.xml 
+# Block access to admin pages
+User-agent: *
+Disallow: /admin/
+Disallow: /login/
+Disallow: /dashboard/
+
+# Block specific files and directories
+User-agent: *
+Disallow: /private/
+Disallow: /*.json$
+Disallow: /*.js.map$
+Disallow: /*.css.map$
+
+# Allow media bots full access
+User-agent: Googlebot-Image
+Allow: /images/
+
+User-agent: Googlebot-Video
+Allow: /videos/
+
+# Set crawl delay for specific bots
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10
+
+# Sitemap files location
+Sitemap: https://calcq.app/sitemap.xml
+Sitemap: https://calcq.app/sitemap-blog.xml
+Sitemap: https://calcq.app/sitemap-categories.xml
+Sitemap: https://calcq.app/sitemap-conversions.xml 

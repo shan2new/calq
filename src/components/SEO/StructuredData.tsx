@@ -291,11 +291,43 @@ export const ArticleStructuredData: React.FC<ArticleProps> = ({
   );
 };
 
+// Calculator structured data specifically for conversion tools
+export const CalculatorStructuredData: React.FC<{
+  calculatorType: string;
+  description: string;
+  url: string;
+}> = ({ calculatorType, description, url }) => {
+  const calculatorSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    'applicationCategory': 'CalculatorApplication',
+    'name': `${calculatorType} Calculator`,
+    'operatingSystem': 'Web',
+    'description': description,
+    'url': url,
+    'offers': {
+      '@type': 'Offer',
+      'price': '0',
+      'priceCurrency': 'USD'
+    },
+    'featureList': 'Instant calculations, unit conversions, mobile-friendly, offline capability'
+  };
+
+  return (
+    <Helmet>
+      <script type="application/ld+json">
+        {JSON.stringify(calculatorSchema)}
+      </script>
+    </Helmet>
+  );
+};
+
 export default { 
   ConversionStructuredData, 
   CategoryListStructuredData,
   FAQStructuredData,
   WebApplicationStructuredData,
   ProductStructuredData,
-  ArticleStructuredData
+  ArticleStructuredData,
+  CalculatorStructuredData
 }; 

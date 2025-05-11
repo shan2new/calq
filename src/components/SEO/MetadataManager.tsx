@@ -76,7 +76,7 @@ export const MetadataManager: React.FC<MetadataProps> = ({
       <link rel="canonical" href={currentUrl} />
       
       {/* Search console verification - replace with your actual verification code */}
-      <meta name="google-site-verification" content="REPLACE_WITH_YOUR_VERIFICATION_CODE" />
+      <meta name="google-site-verification" content="CALCQ-VERIFICATION-CODE" />
       
       {/* Additional meta tags for SEO */}
       <meta name="keywords" content={pageKeywords} />
@@ -98,6 +98,26 @@ export const MetadataManager: React.FC<MetadataProps> = ({
       <meta name="mobile-web-app-capable" content="yes" />
       <meta name="format-detection" content="telephone=no" />
       
+      {/* Social media sharing meta tags */}
+      <meta property="og:type" content="website" />
+      <meta property="og:title" content={pageTitle} />
+      <meta property="og:description" content={pageDescription} />
+      <meta property="og:url" content={currentUrl} />
+      <meta property="og:site_name" content="Calcq" />
+      <meta property="og:image" content={imageUrl} />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta property="og:locale" content={language} />
+      
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={pageTitle} />
+      <meta name="twitter:description" content={pageDescription} />
+      <meta name="twitter:image" content={imageUrl} />
+      
+      {/* Optional publication date for articles */}
+      {publishedTime && <meta property="article:published_time" content={publishDate} />}
+      {modifiedTime && <meta property="article:modified_time" content={modifyDate} />}
+      
       {/* PWA related tags */}
       <link rel="manifest" href="/manifest.json" />
       <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
@@ -105,23 +125,6 @@ export const MetadataManager: React.FC<MetadataProps> = ({
       <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
       <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5" />
       <meta name="msapplication-TileColor" content="#da532c" />
-      
-      {/* Open Graph tags */}
-      <meta property="og:type" content="website" />
-      <meta property="og:url" content={currentUrl} />
-      <meta property="og:title" content={pageTitle} />
-      <meta property="og:description" content={pageDescription} />
-      <meta property="og:image" content={imageUrl} />
-      <meta property="og:site_name" content="Calcq" />
-      <meta property="og:locale" content={language === 'en' ? 'en_US' : `${language}_${language.toUpperCase()}`} />
-      {publishedTime && <meta property="article:published_time" content={publishDate} />}
-      {modifiedTime && <meta property="article:modified_time" content={modifyDate} />}
-      
-      {/* Twitter Card tags */}
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={pageTitle} />
-      <meta name="twitter:description" content={pageDescription} />
-      <meta name="twitter:image" content={imageUrl} />
     </Helmet>
   );
 };

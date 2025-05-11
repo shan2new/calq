@@ -5,9 +5,9 @@ import { Breadcrumbs, BreadcrumbsStructuredData, generateConversionBreadcrumbs }
 import { 
   ConversionStructuredData, 
   FAQStructuredData,
-  ArticleStructuredData 
+  ArticleStructuredData,
+  CalculatorStructuredData
 } from '../components/SEO/StructuredData';
-import { ResponsiveImage } from '../components/ui/ResponsiveImage';
 import ConverterWithSpecialized from './ConverterWithSpecialized';
 
 export const ConversionLanding: React.FC = () => {
@@ -51,7 +51,7 @@ export const ConversionLanding: React.FC = () => {
   const pageDescription = `Quickly convert ${fromUnitName} to ${toUnitName} with our free ${categoryName.toLowerCase()} converter. Accurate, easy-to-use calculator with step-by-step instructions and formulas.`;
   
   // Generate conversion formula explanation - this would be unit-specific in a real implementation
-  const conversionFormula = getConversionFormula(fromUnit || '', toUnit || '', category || '');
+  const conversionFormula = getConversionFormula(fromUnit || '', toUnit || '');
   
   // Generate FAQ questions specific to this conversion
   const faqQuestions = [
@@ -82,7 +82,7 @@ export const ConversionLanding: React.FC = () => {
   ];
   
   // Related conversions - this would be dynamically generated based on user interests
-  const relatedConversions = getRelatedConversions(category || '', fromUnit || '', toUnit || '');
+  const relatedConversions = getRelatedConversions(category || '');
   
   return (
     <div className="container mx-auto max-w-4xl p-4">
@@ -121,6 +121,11 @@ export const ConversionLanding: React.FC = () => {
         fromUnit={fromUnitName}
         toUnit={toUnitName}
         questions={faqQuestions}
+      />
+      <CalculatorStructuredData
+        calculatorType={`${fromUnitName} to ${toUnitName}`}
+        description={`Free online calculator to convert ${fromUnitName} to ${toUnitName}. Instant results with step-by-step instructions and formulas.`}
+        url={`https://calcq.app/convert/${category}/${fromUnit}/${toUnit}`}
       />
       
       {/* Visual UI */}
@@ -233,9 +238,22 @@ export const ConversionLanding: React.FC = () => {
 
 // Helper functions - these would be more sophisticated in a real implementation
 
-function getConversionFormula(fromUnit: string, toUnit: string, category: string) {
+interface ConversionFormula {
+  factor: number;
+  formula: string;
+  explanation: string;
+  steps: string[];
+}
+
+interface RelatedConversion {
+  category: string;
+  from: string;
+  to: string;
+}
+
+function getConversionFormula(fromUnit: string, toUnit: string): ConversionFormula {
   // This is a simplified example - in reality, you would have a database or API for accurate formulas
-  const commonFormulas: Record<string, any> = {
+  const commonFormulas: Record<string, ConversionFormula> = {
     'meter-foot': {
       factor: 3.28084,
       formula: '× 3.28084',
@@ -270,7 +288,7 @@ function getConversionFormula(fromUnit: string, toUnit: string, category: string
   };
 }
 
-function getConversionUseCase(fromUnit: string, toUnit: string, category: string) {
+function getConversionUseCase(fromUnit: string, toUnit: string, category: string): string {
   const useCases: Record<string, string> = {
     'meter-foot': 'Converting meters to feet is common when working with international measurements, especially between metric and imperial systems. This conversion is useful in construction, interior design, and when traveling between countries that use different measurement systems.',
     'celsius-fahrenheit': 'Converting Celsius to Fahrenheit is essential when traveling between countries that use different temperature scales, interpreting weather forecasts, setting ovens or other appliances, and understanding medical temperature readings.',
@@ -281,7 +299,7 @@ function getConversionUseCase(fromUnit: string, toUnit: string, category: string
   return useCases[key] || `Converting ${fromUnit} to ${toUnit} is useful in various ${category} applications where different measurement systems are used.`;
 }
 
-function getUseCaseApplications(fromUnit: string, toUnit: string, category: string) {
+function getUseCaseApplications(fromUnit: string, toUnit: string, category: string): string[] {
   const applications: Record<string, string[]> = {
     'meter-foot': [
       'International construction projects using materials from different regions',
@@ -312,9 +330,9 @@ function getUseCaseApplications(fromUnit: string, toUnit: string, category: stri
   ];
 }
 
-function getRelatedConversions(category: string, fromUnit: string, toUnit: string) {
+function getRelatedConversions(category: string): RelatedConversion[] {
   // This would be replaced with dynamic suggestions based on user behavior, popular conversions, etc.
-  const relatedByCategory: Record<string, any[]> = {
+  const relatedByCategory: Record<string, RelatedConversion[]> = {
     'length': [
       { category: 'length', from: 'meter', to: 'yard' },
       { category: 'length', from: 'centimeter', to: 'inch' },

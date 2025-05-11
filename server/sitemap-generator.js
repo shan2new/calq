@@ -21,6 +21,7 @@ export async function generateSitemap() {
     generateCategorySitemap(outputDir, baseUrl),
     generateConversionSitemap(outputDir, baseUrl),
     generateImageSitemap(outputDir, baseUrl),
+    generateBlogSitemap(outputDir, baseUrl),
     generateSitemapIndex(outputDir, baseUrl)
   ]);
   
@@ -154,6 +155,50 @@ ${imageUrls.map(item => `  <url>
   console.log('Image sitemap generated successfully');
 }
 
+// Generate blog sitemap
+async function generateBlogSitemap(outputDir, baseUrl) {
+  // Get blog post data - in a real implementation, this would come from a database or API
+  const blogPosts = [
+    {
+      slug: 'why-metric-system-worldwide',
+      lastmod: '2023-01-20',
+      changefreq: 'monthly',
+      priority: '0.8'
+    },
+    {
+      slug: 'common-conversion-mistakes',
+      lastmod: '2023-02-15',
+      changefreq: 'monthly',
+      priority: '0.8'
+    },
+    {
+      slug: 'recipe-measurements-abroad',
+      lastmod: '2023-03-05',
+      changefreq: 'monthly',
+      priority: '0.7'
+    },
+    {
+      slug: 'unit-conversion-history',
+      lastmod: '2023-04-18',
+      changefreq: 'monthly',
+      priority: '0.7'
+    }
+  ];
+  
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${blogPosts.map(post => `  <url>
+    <loc>${baseUrl}/blog/${post.slug}</loc>
+    <lastmod>${post.lastmod}</lastmod>
+    <changefreq>${post.changefreq}</changefreq>
+    <priority>${post.priority}</priority>
+  </url>`).join('\n')}
+</urlset>`;
+
+  fs.writeFileSync(path.resolve(outputDir, 'sitemap-blog.xml'), sitemap);
+  console.log('Blog sitemap generated successfully');
+}
+
 // Generate sitemap index file
 async function generateSitemapIndex(outputDir, baseUrl) {
   const sitemaps = [
@@ -171,6 +216,11 @@ async function generateSitemapIndex(outputDir, baseUrl) {
       name: 'sitemap-conversions.xml',
       lastmod: new Date().toISOString().split('T')[0],
       priority: 0.6
+    },
+    {
+      name: 'sitemap-blog.xml',
+      lastmod: new Date().toISOString().split('T')[0],
+      priority: 0.7
     },
     {
       name: 'sitemap-images.xml',

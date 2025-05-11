@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, useLocation, useParams } from 'react-router-dom';
-import { HelmetProvider } from 'react-helmet-async';
+import { HelmetProvider, Helmet } from 'react-helmet-async';
 import { ThemeProvider } from './contexts/ThemeProvider';
 import { UserProvider } from './contexts/UserContext';
 import { useEffect } from 'react';
@@ -133,6 +133,17 @@ function App() {
               {/* Global structured data */}
               <WebApplicationStructuredData />
               <ProductStructuredData />
+              
+              {/* Default open graph image */}
+              <Helmet>
+                <link rel="canonical" href="https://calcq.app/" />
+                <meta name="application-name" content="Calcq" />
+                <meta property="og:image" content="https://calcq.app/images/og-default.jpg" />
+                <meta property="og:image:width" content="1200" />
+                <meta property="og:image:height" content="630" />
+                <meta property="og:type" content="website" />
+                <meta property="og:site_name" content="Calcq" />
+              </Helmet>
               
               {/* Track page views */}
               <PageViewTracker />
