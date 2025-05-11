@@ -12,29 +12,44 @@ interface BreadcrumbsProps {
   className?: string;
 }
 
-// Visual breadcrumbs component
+// Visual breadcrumbs component with enhanced semantic markup
 export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, className = '' }) => {
   if (!items || items.length === 0) {
     return null;
   }
   
   return (
-    <nav aria-label="Breadcrumb" className={`text-sm ${className}`}>
+    <nav aria-label="Breadcrumb" className={`text-sm ${className}`} itemScope itemType="https://schema.org/BreadcrumbList">
       <ol className="flex items-center flex-wrap gap-1">
         {items.map((item, index) => (
-          <li key={item.url} className="flex items-center">
-            {index > 0 && <span className="mx-1 text-muted-foreground">/</span>}
+          <li 
+            key={item.url} 
+            className="flex items-center" 
+            itemProp="itemListElement" 
+            itemScope 
+            itemType="https://schema.org/ListItem"
+          >
+            {index > 0 && <span className="mx-1 text-muted-foreground" aria-hidden="true">/</span>}
             {index === items.length - 1 ? (
-              <span aria-current="page" className="font-medium text-foreground">
+              <span 
+                aria-current="page" 
+                className="font-medium text-foreground"
+                itemProp="name"
+              >
                 {item.name}
               </span>
             ) : (
               <Link 
                 to={item.url} 
                 className="text-muted-foreground hover:text-foreground transition-colors"
+                itemProp="item"
               >
-                {item.name}
+                <span itemProp="name">{item.name}</span>
+                <meta itemProp="position" content={`${index + 1}`} />
               </Link>
+            )}
+            {index === items.length - 1 && (
+              <meta itemProp="position" content={`${index + 1}`} />
             )}
           </li>
         ))}

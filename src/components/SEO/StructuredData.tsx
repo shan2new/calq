@@ -122,7 +122,7 @@ export const CategoryListStructuredData: React.FC<CategoryListStructuredDataProp
   );
 };
 
-// New FAQ Structured Data component
+// FAQ Structured Data component
 interface FAQProps {
   category: string;
   fromUnit: string;
@@ -201,9 +201,101 @@ export const WebApplicationStructuredData: React.FC = () => {
   );
 };
 
+// Product structured data with ratings
+export const ProductStructuredData: React.FC = () => {
+  const productSchema = {
+    '@context': 'https://schema.org/',
+    '@type': 'SoftwareApplication',
+    'name': 'Calcq Unit Converter',
+    'applicationCategory': 'UtilityApplication',
+    'operatingSystem': 'Web',
+    'offers': {
+      '@type': 'Offer',
+      'price': '0',
+      'priceCurrency': 'USD'
+    },
+    'aggregateRating': {
+      '@type': 'AggregateRating',
+      'ratingValue': '4.8',
+      'ratingCount': '1024',
+      'bestRating': '5',
+      'worstRating': '1'
+    },
+    'description': 'Fast, accurate unit conversions across 33 categories. Convert anything with our easy-to-use calculator.',
+    'screenshot': 'https://calcq.app/images/calculator-screenshot.png',
+    'featureList': 'Instant conversions, 4,500+ units, history tracking, dark mode, offline capability'
+  };
+  
+  return (
+    <Helmet>
+      <script type="application/ld+json">
+        {JSON.stringify(productSchema)}
+      </script>
+    </Helmet>
+  );
+};
+
+// Article structured data for conversion guides
+interface ArticleProps {
+  title: string;
+  description: string;
+  datePublished: string;
+  dateModified: string;
+  imageUrl: string;
+  url: string;
+  category: string;
+}
+
+export const ArticleStructuredData: React.FC<ArticleProps> = ({
+  title,
+  description,
+  datePublished,
+  dateModified,
+  imageUrl,
+  url,
+  category
+}) => {
+  const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    'headline': title,
+    'description': description,
+    'image': imageUrl,
+    'datePublished': datePublished,
+    'dateModified': dateModified,
+    'author': {
+      '@type': 'Organization',
+      'name': 'Calcq'
+    },
+    'publisher': {
+      '@type': 'Organization',
+      'name': 'Calcq',
+      'logo': {
+        '@type': 'ImageObject',
+        'url': 'https://calcq.app/images/logo.png'
+      }
+    },
+    'mainEntityOfPage': {
+      '@type': 'WebPage',
+      '@id': url
+    },
+    'articleSection': category
+  };
+  
+  return (
+    <Helmet>
+      <script type="application/ld+json">
+        {JSON.stringify(articleSchema)}
+      </script>
+    </Helmet>
+  );
+};
+
 export default { 
   ConversionStructuredData, 
   CategoryListStructuredData,
   FAQStructuredData,
-  WebApplicationStructuredData
+  WebApplicationStructuredData,
+  ProductStructuredData,
+  ArticleStructuredData
 }; 

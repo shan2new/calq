@@ -13,6 +13,9 @@ interface MetadataProps {
   imageUrl?: string;
   keywords?: string;
   noIndex?: boolean;
+  language?: string;
+  publishedTime?: string; 
+  modifiedTime?: string;
 }
 
 export const MetadataManager: React.FC<MetadataProps> = ({
@@ -25,7 +28,10 @@ export const MetadataManager: React.FC<MetadataProps> = ({
   canonicalPath,
   imageUrl = '/images/og-default.jpg',
   keywords,
-  noIndex = false
+  noIndex = false,
+  language = 'en',
+  publishedTime,
+  modifiedTime
 }) => {
   const location = useLocation();
   
@@ -57,28 +63,48 @@ export const MetadataManager: React.FC<MetadataProps> = ({
     ? `${fromUnit} to ${toUnit}, ${category} converter, unit conversion, online calculator, ${fromUnit}, ${toUnit}`
     : 'unit converter, online calculator, measurement conversion, calcq');
   
+  // Get current date for auto-generated dates if needed
+  const currentDate = new Date().toISOString();
+  const publishDate = publishedTime || currentDate;
+  const modifyDate = modifiedTime || currentDate;
+  
   return (
     <Helmet>
+      <html lang={language} />
       <title>{pageTitle}</title>
       <meta name="description" content={pageDescription} />
       <link rel="canonical" href={currentUrl} />
+      
+      {/* Search console verification - replace with your actual verification code */}
+      <meta name="google-site-verification" content="REPLACE_WITH_YOUR_VERIFICATION_CODE" />
       
       {/* Additional meta tags for SEO */}
       <meta name="keywords" content={pageKeywords} />
       {noIndex ? (
         <meta name="robots" content="noindex,nofollow" />
       ) : (
-        <meta name="robots" content="index,follow" />
+        <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
       )}
       <meta name="googlebot" content={noIndex ? "noindex,nofollow" : "index,follow"} />
       
       {/* Technical and mobile optimization */}
-      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-      <meta name="theme-color" content="#ffffff" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+      <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+      <meta name="theme-color" content="#18181b" media="(prefers-color-scheme: dark)" />
       <meta name="application-name" content="Calcq" />
       <meta name="apple-mobile-web-app-title" content="Calcq" />
       <meta name="apple-mobile-web-app-capable" content="yes" />
+      <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+      <meta name="mobile-web-app-capable" content="yes" />
       <meta name="format-detection" content="telephone=no" />
+      
+      {/* PWA related tags */}
+      <link rel="manifest" href="/manifest.json" />
+      <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+      <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+      <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+      <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5" />
+      <meta name="msapplication-TileColor" content="#da532c" />
       
       {/* Open Graph tags */}
       <meta property="og:type" content="website" />
@@ -87,7 +113,9 @@ export const MetadataManager: React.FC<MetadataProps> = ({
       <meta property="og:description" content={pageDescription} />
       <meta property="og:image" content={imageUrl} />
       <meta property="og:site_name" content="Calcq" />
-      <meta property="og:locale" content="en_US" />
+      <meta property="og:locale" content={language === 'en' ? 'en_US' : `${language}_${language.toUpperCase()}`} />
+      {publishedTime && <meta property="article:published_time" content={publishDate} />}
+      {modifiedTime && <meta property="article:modified_time" content={modifyDate} />}
       
       {/* Twitter Card tags */}
       <meta name="twitter:card" content="summary_large_image" />

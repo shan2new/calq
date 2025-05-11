@@ -13,10 +13,13 @@ import History from './pages/History';
 import Settings from './pages/Settings';
 import Layout from './components/Layout';
 import ConverterWithSpecialized from './pages/ConverterWithSpecialized';
+import CategoryLanding from './pages/CategoryLanding';
 
 // SEO Components
 import MetadataManager from './components/SEO/MetadataManager';
-import { WebApplicationStructuredData } from './components/SEO/StructuredData';
+import { WebApplicationStructuredData, ProductStructuredData } from './components/SEO/StructuredData';
+import ResourceHints from './components/SEO/ResourceHints';
+import HreflangTags from './components/SEO/HreflangTags';
 
 // Page view tracker component
 const PageViewTracker = () => {
@@ -46,7 +49,7 @@ const LegacyConverterRoute = () => {
   );
 };
 
-// SEO-friendly route component
+// SEO-friendly route component for unit conversions
 const SEOConverterRoute = () => {
   const params = useParams<{
     category?: string;
@@ -78,7 +81,40 @@ const SEOConverterRoute = () => {
   );
 };
 
+// Web Worker Setup
+const setupWebWorker = () => {
+  // Check if Worker API is supported
+  if (typeof Worker !== 'undefined') {
+    // Create a global worker if it doesn't exist yet
+    if (!window.conversionWorker) {
+      window.conversionWorker = new Worker('/conversion-worker.js');
+      
+      // Set up message handler
+      window.conversionWorker.onmessage = (e) => {
+        // Dispatch a custom event to notify components of worker results
+        const event = new CustomEvent('conversionResult', { detail: e.data });
+        window.dispatchEvent(event);
+      };
+      
+      console.log('Conversion web worker initialized');
+    }
+  }
+};
+
 function App() {
+  // Initialize web worker for calculations
+  useEffect(() => {
+    setupWebWorker();
+    
+    // Clean up worker on component unmount
+    return () => {
+      if (window.conversionWorker) {
+        window.conversionWorker.terminate();
+        delete window.conversionWorker;
+      }
+    };
+  }, []);
+  
   return (
     <HelmetProvider>
       <ThemeProvider>
@@ -88,8 +124,15 @@ function App() {
               {/* Base app metadata */}
               <MetadataManager />
               
-              {/* Global structured data for WebApplication */}
+              {/* Resource hints for Core Web Vitals */}
+              <ResourceHints />
+              
+              {/* Hreflang tags for internationalization */}
+              <HreflangTags />
+              
+              {/* Global structured data */}
               <WebApplicationStructuredData />
+              <ProductStructuredData />
               
               {/* Track page views */}
               <PageViewTracker />
@@ -98,7 +141,10 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/explore" element={<Explore />} />
                 
-                {/* SEO-friendly URL format - higher priority */}
+                {/* Category landing pages */}
+                <Route path="/convert/:category" element={<CategoryLanding />} />
+                
+                {/* SEO-friendly URL format for conversions */}
                 <Route 
                   path="/convert/:category/:fromUnit/:toUnit/:value?" 
                   element={<SEOConverterRoute />} 
@@ -116,6 +162,13 @@ function App() {
       </ThemeProvider>
     </HelmetProvider>
   );
+}
+
+// Add TypeScript interfaces for window object to include the web worker
+declare global {
+  interface Window {
+    conversionWorker?: Worker;
+  }
 }
 
 export default App; 
