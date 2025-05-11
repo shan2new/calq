@@ -1056,7 +1056,6 @@ const Converter: React.FC<{
                       toValue={convertedValue}
                       toUnit={toUnitData}
                       categoryId={selectedCategory}
-                      isCalculating={isCalculating}
                     />
                   )}
                 </div>

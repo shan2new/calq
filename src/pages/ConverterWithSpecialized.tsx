@@ -15,6 +15,8 @@ import OriginalConverter from './Converter';
 
 // Import SEO components
 import MetadataManager from '../components/SEO/MetadataManager';
+import { ConversionStructuredData, FAQStructuredData, WebApplicationStructuredData } from '../components/SEO/StructuredData';
+import { Breadcrumbs, BreadcrumbsStructuredData, generateConversionBreadcrumbs } from '../components/SEO/Breadcrumbs';
 import { parseCanonicalPath, buildCanonicalPath } from '../lib/url-utils';
 
 interface ConverterProps {
@@ -119,6 +121,32 @@ const ConverterWithSpecialized: React.FC<ConverterProps> = ({
     : (seoParams?.fromUnit && seoParams?.toUnit && seoParams?.category
       ? buildCanonicalPath(seoParams.category, seoParams.fromUnit, seoParams.toUnit, seoParams.value)
       : null);
+      
+  // Generate breadcrumbs for the current conversion
+  const breadcrumbItems = generateConversionBreadcrumbs(
+    seoParams?.category,
+    seoParams?.fromUnit,
+    seoParams?.toUnit
+  );
+  
+  // Create mock unit objects for structured data
+  // In a real implementation, you would get these from your actual data source
+  const mockFromUnit = seoParams?.fromUnit ? {
+    id: seoParams.fromUnit,
+    name: seoParams.fromUnit,
+    symbol: seoParams.fromUnit.substring(0, 3)
+  } : undefined;
+  
+  const mockToUnit = seoParams?.toUnit ? {
+    id: seoParams.toUnit,
+    name: seoParams.toUnit,
+    symbol: seoParams.toUnit.substring(0, 3)
+  } : undefined;
+  
+  const mockCategory = seoParams?.category ? {
+    id: seoParams.category,
+    name: seoParams.category
+  } : undefined;
   
   return (
     <div className="container mx-auto max-w-3xl">
@@ -131,7 +159,37 @@ const ConverterWithSpecialized: React.FC<ConverterProps> = ({
         toUnit={seoParams?.toUnit}
         category={seoParams?.category}
         value={seoParams?.value}
+        keywords={`${seoParams?.fromUnit || ''} to ${seoParams?.toUnit || ''}, ${seoParams?.category || 'unit'} converter, unit conversion, online calculator`}
       />
+      
+      {/* Structured data for conversions - only include when we have full conversion data */}
+      {seoParams?.fromUnit && seoParams?.toUnit && seoParams?.category && (
+        <>
+          <ConversionStructuredData
+            fromUnit={mockFromUnit}
+            toUnit={mockToUnit}
+            category={mockCategory}
+            fromValue={seoParams.value || 1}
+            toValue={(seoParams.value || 1) * 2} // Mock value - in real use, use the actual converted value
+          />
+          <FAQStructuredData
+            category={seoParams.category}
+            fromUnit={seoParams.fromUnit}
+            toUnit={seoParams.toUnit}
+          />
+        </>
+      )}
+      
+      {/* WebApplication structured data */}
+      <WebApplicationStructuredData />
+      
+      {/* Breadcrumbs structured data */}
+      <BreadcrumbsStructuredData items={breadcrumbItems} />
+      
+      {/* Visual breadcrumbs - only show on conversion pages */}
+      {breadcrumbItems.length > 1 && (
+        <Breadcrumbs items={breadcrumbItems} className="mb-4 py-2" />
+      )}
       
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <div className="flex justify-center w-full">

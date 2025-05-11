@@ -11,6 +11,8 @@ interface MetadataProps {
   value?: string | number;
   canonicalPath?: string;
   imageUrl?: string;
+  keywords?: string;
+  noIndex?: boolean;
 }
 
 export const MetadataManager: React.FC<MetadataProps> = ({
@@ -21,7 +23,9 @@ export const MetadataManager: React.FC<MetadataProps> = ({
   category,
   value,
   canonicalPath,
-  imageUrl = '/images/og-default.jpg'
+  imageUrl = '/images/og-default.jpg',
+  keywords,
+  noIndex = false
 }) => {
   const location = useLocation();
   
@@ -48,11 +52,33 @@ export const MetadataManager: React.FC<MetadataProps> = ({
     ? `Convert ${value || ''} ${fromUnit} to ${toUnit} with Calcq's ${category} converter. Instant, accurate unit conversions with step-by-step process.`
     : 'Calcq provides instant, accurate unit conversions across multiple categories. Convert length, mass, volume, and more with our easy-to-use calculator.');
   
+  // Generate keywords if not provided
+  const pageKeywords = keywords || (fromUnit && toUnit && category
+    ? `${fromUnit} to ${toUnit}, ${category} converter, unit conversion, online calculator, ${fromUnit}, ${toUnit}`
+    : 'unit converter, online calculator, measurement conversion, calcq');
+  
   return (
     <Helmet>
       <title>{pageTitle}</title>
       <meta name="description" content={pageDescription} />
       <link rel="canonical" href={currentUrl} />
+      
+      {/* Additional meta tags for SEO */}
+      <meta name="keywords" content={pageKeywords} />
+      {noIndex ? (
+        <meta name="robots" content="noindex,nofollow" />
+      ) : (
+        <meta name="robots" content="index,follow" />
+      )}
+      <meta name="googlebot" content={noIndex ? "noindex,nofollow" : "index,follow"} />
+      
+      {/* Technical and mobile optimization */}
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+      <meta name="theme-color" content="#ffffff" />
+      <meta name="application-name" content="Calcq" />
+      <meta name="apple-mobile-web-app-title" content="Calcq" />
+      <meta name="apple-mobile-web-app-capable" content="yes" />
+      <meta name="format-detection" content="telephone=no" />
       
       {/* Open Graph tags */}
       <meta property="og:type" content="website" />
@@ -60,6 +86,8 @@ export const MetadataManager: React.FC<MetadataProps> = ({
       <meta property="og:title" content={pageTitle} />
       <meta property="og:description" content={pageDescription} />
       <meta property="og:image" content={imageUrl} />
+      <meta property="og:site_name" content="Calcq" />
+      <meta property="og:locale" content="en_US" />
       
       {/* Twitter Card tags */}
       <meta name="twitter:card" content="summary_large_image" />

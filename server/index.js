@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import express from 'express';
 import compression from 'compression';
 import { createServer as createViteServer } from 'vite';
+import { generateSitemap } from './sitemap-generator.js'; // Import sitemap generator
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isProduction = process.env.NODE_ENV === 'production';
@@ -29,6 +30,22 @@ async function createServer() {
     app.use(express.static(path.resolve(__dirname, '../dist/client'), {
       index: false
     }));
+    
+    // Generate sitemap in production
+    try {
+      await generateSitemap();
+      console.log('Sitemap generated successfully!');
+    } catch (error) {
+      console.error('Error generating sitemap:', error);
+    }
+    
+    // Add route for robots.txt if not already in static files
+    if (!fs.existsSync(path.resolve(__dirname, '../dist/client/robots.txt'))) {
+      app.get('/robots.txt', (req, res) => {
+        res.type('text/plain');
+        res.send('User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /history/\n\nSitemap: https://calcq.app/sitemap.xml');
+      });
+    }
   }
   
   app.use('*', async (req, res) => {

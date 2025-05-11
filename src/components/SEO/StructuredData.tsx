@@ -122,4 +122,88 @@ export const CategoryListStructuredData: React.FC<CategoryListStructuredDataProp
   );
 };
 
-export default { ConversionStructuredData, CategoryListStructuredData }; 
+// New FAQ Structured Data component
+interface FAQProps {
+  category: string;
+  fromUnit: string;
+  toUnit: string;
+  questions?: Array<{question: string, answer: string}>;
+}
+
+export const FAQStructuredData: React.FC<FAQProps> = ({ 
+  category, 
+  fromUnit, 
+  toUnit,
+  questions = []
+}) => {
+  // Default questions if none provided
+  const defaultQuestions = [
+    {
+      question: `How do I convert from ${fromUnit} to ${toUnit}?`,
+      answer: `To convert from ${fromUnit} to ${toUnit}, enter your value in the ${fromUnit} field and see the instant conversion result in ${toUnit}.`
+    },
+    {
+      question: `What is the formula to convert ${fromUnit} to ${toUnit}?`,
+      answer: `The formula for converting from ${fromUnit} to ${toUnit} depends on the specific units. Our calculator handles all the complex mathematics for accurate conversions.`
+    },
+    {
+      question: `Why should I use Calcq for ${category} conversions?`,
+      answer: `Calcq provides instant, accurate conversions with a user-friendly interface. Our ${category} converter is designed to be fast, reliable, and easy to use.`
+    }
+  ];
+  
+  // Combine default and custom questions
+  const allQuestions = [...defaultQuestions, ...questions];
+  
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    'mainEntity': allQuestions.map(q => ({
+      '@type': 'Question',
+      'name': q.question,
+      'acceptedAnswer': {
+        '@type': 'Answer',
+        'text': q.answer
+      }
+    }))
+  };
+  
+  return (
+    <Helmet>
+      <script type="application/ld+json">
+        {JSON.stringify(faqSchema)}
+      </script>
+    </Helmet>
+  );
+};
+
+// WebApplication structured data
+export const WebApplicationStructuredData: React.FC = () => {
+  const appSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    'name': 'Calcq Calculator',
+    'applicationCategory': 'UtilityApplication',
+    'operatingSystem': 'Web',
+    'offers': {
+      '@type': 'Offer',
+      'price': '0',
+      'priceCurrency': 'USD'
+    }
+  };
+  
+  return (
+    <Helmet>
+      <script type="application/ld+json">
+        {JSON.stringify(appSchema)}
+      </script>
+    </Helmet>
+  );
+};
+
+export default { 
+  ConversionStructuredData, 
+  CategoryListStructuredData,
+  FAQStructuredData,
+  WebApplicationStructuredData
+}; 

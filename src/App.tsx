@@ -1,9 +1,8 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, useParams } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { ThemeProvider } from './contexts/ThemeProvider';
 import { UserProvider } from './contexts/UserContext';
 import { useEffect } from 'react';
-import posthog from 'posthog-js';
 import { trackPageView, trackSeoUrlConversion } from './lib/analytics';
 import './index.css';
 
@@ -17,9 +16,7 @@ import ConverterWithSpecialized from './pages/ConverterWithSpecialized';
 
 // SEO Components
 import MetadataManager from './components/SEO/MetadataManager';
-
-// URL utilities
-import { parseCanonicalPath, buildCanonicalPath } from './lib/url-utils';
+import { WebApplicationStructuredData } from './components/SEO/StructuredData';
 
 // Page view tracker component
 const PageViewTracker = () => {
@@ -90,6 +87,9 @@ function App() {
             <Layout>
               {/* Base app metadata */}
               <MetadataManager />
+              
+              {/* Global structured data for WebApplication */}
+              <WebApplicationStructuredData />
               
               {/* Track page views */}
               <PageViewTracker />
