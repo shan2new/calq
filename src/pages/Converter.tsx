@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { unitCategories, formatNumberByCategory } from '../lib/units';
 import { useHistory } from '../contexts/HistoryContext';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { usePresets } from '../contexts/PresetsContext';
 import { 
   X, 
-  Search, ChevronRight
+  Search, 
+  ChevronRight
 } from 'lucide-react';
 import { debounce } from 'lodash-es';
 import { 
@@ -23,19 +23,17 @@ import { UnitCategoryId, unitCategoryInfo, UnitCategory, Unit, ConversionOptions
 import { loadUnitCategory, initializeEssentialCategories, preloadCategories, isCategoryLoaded } from '../lib/unit-loader';
 import { convert as newConvert, getCompatibleUnits, getPopularUnits } from '../lib/conversion-engine';
 import { searchUnits } from '../lib/unit-search';
-import { QuickAccessItem } from '../lib/indexedDB';
 
-// Import the new components
-import QuickAccessChips from '../components/QuickAccessChips';
+
 import ExpressionInput from '../components/ExpressionInput';
 import ConversionResult from '../components/ConversionResult';
 import RelationshipIndicator from '../components/RelationshipIndicator';
 import UnitSelector from '../components/UnitSelector';
 import ConverterActions from '../components/ConverterActions';
 import UnitInformation from '../components/UnitInformation';
-import CategorySelector from '../components/CategorySelector';
 import Toast, { ToastType } from '../components/Toast';
-
+import { CategoryIcon } from '../components/ui/CategoryIcon';
+import CategorySelector from '../components/CategorySelector';
 
 // SVG Animation for successful conversion
 const SuccessfulConversionAnimation = ({ isVisible }: { isVisible: boolean }) => {
@@ -126,7 +124,7 @@ const Converter: React.FC<{
   // Use the navigate hook for deep-linking using history.replaceState
   const navigate = useNavigate();
   
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const { addToHistory } = useHistory();
   const { addToFavorites, isInFavorites, removeFromFavorites } = useFavorites();
   const { addPreset } = usePresets();
@@ -166,11 +164,9 @@ const Converter: React.FC<{
   const [categoryLoading, setCategoryLoading] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
-  const [validationError, setValidationError] = useState<string | null>(null);
   
   // New state variables for the enhanced system
   const [categoryData, setCategoryData] = useState<UnitCategory | null>(null);
-  const [availableCategories] = useState<string[]>([]);
   const [fromUnitData, setFromUnitData] = useState<Unit | null>(null);
   const [toUnitData, setToUnitData] = useState<Unit | null>(null);
   const [compatibleUnits, setCompatibleUnits] = useState<Unit[]>([]);
@@ -394,7 +390,6 @@ const Converter: React.FC<{
       console.error('Conversion failed:', error);
       setConvertedValue(null);
       setFormattedConvertedValue('');
-      setValidationError('Conversion failed. Please try again.');
     } finally {
       setIsCalculating(false);
     }
@@ -430,7 +425,7 @@ const Converter: React.FC<{
     if (fromValue) newParams.set('value', fromValue);
     
     // Use location state to avoid full page reloads
-    navigate(`/converter?${newParams.toString()}`, { replace: true });
+    navigate(`/?${newParams.toString()}`, { replace: true });
     
     // Reset initial load flag after first conversion attempt
     if (isInitialLoadRef.current && fromUnit && toUnit) {
@@ -523,20 +518,6 @@ const Converter: React.FC<{
     }
   };
   
-  // Get current category data
-  const currentCategory = useMemo(() => 
-    unitCategories.find(cat => cat.id === selectedCategory),
-    [selectedCategory]
-  );
-  
-  // Get the symbol for a unit - memoized for performance
-  const getUnitSymbol = useMemo(() => {
-    return (unitId: string): string => {
-      const unit = currentCategory?.units.find(u => u.id === unitId);
-      return unit?.symbol || '';
-    };
-  }, [currentCategory]);
-  
   // Check if the current conversion is in favorites
   const isFavorite = (): boolean => {
     try {
@@ -546,49 +527,6 @@ const Converter: React.FC<{
       return false;
     }
   };
-  
-  // Memoized formatted result using the new category-aware formatter
-  const formattedResult = useMemo(() => {
-    if (convertedValue === null) return '';
-    return formatNumberByCategory(convertedValue, selectedCategory);
-  }, [convertedValue, selectedCategory]);
-  
-  // Memoized unit symbols
-  const fromUnitSymbol = useMemo(() => getUnitSymbol(fromUnit), [fromUnit, getUnitSymbol]);
-  const toUnitSymbol = useMemo(() => getUnitSymbol(toUnit), [toUnit, getUnitSymbol]);
-  
-  // Check for related units to show relationship indicators
-  const unitRelationship = useMemo(() => {
-    if (fromUnit === toUnit) return 'equal';
-    
-    const fromUnitObj = currentCategory?.units.find(u => u.id === fromUnit);
-    const toUnitObj = currentCategory?.units.find(u => u.id === toUnit);
-    
-    if (!fromUnitObj || !toUnitObj) return 'unknown';
-    
-    // Simple heuristics for relationships
-    // In a real app, this would be part of the unit data model
-    if (fromUnit === 'meter' && toUnit === 'foot' || fromUnit === 'foot' && toUnit === 'meter') {
-      return 'imperial-metric';
-    }
-    
-    if (fromUnitObj.name.includes('square') && toUnitObj.name.includes('square')) {
-      return 'similar';
-    }
-    
-    if (['kilometer', 'meter', 'centimeter', 'millimeter'].includes(fromUnit) &&
-        ['kilometer', 'meter', 'centimeter', 'millimeter'].includes(toUnit)) {
-      return 'decimal';
-    }
-    
-    if (['foot', 'inch', 'yard', 'mile'].includes(fromUnit) &&
-        ['foot', 'inch', 'yard', 'mile'].includes(toUnit)) {
-      return 'imperial';
-    }
-    
-    return 'standard';
-  }, [currentCategory, fromUnit, toUnit]);
-  
   
   // Handle toggle favorite
   const handleToggleFavorite = () => {
@@ -653,28 +591,13 @@ const Converter: React.FC<{
       }
     }
   };
-  
-  // Handler for applying a quick access conversion
-  const handleApplyQuickAccess = (item: QuickAccessItem) => {
-    if (item.category !== selectedCategory) {
-      setSelectedCategory(item.category);
-    }
-    setFromUnit(item.fromUnit);
-    setToUnit(item.toUnit);
-    
-    // Add toast for user feedback
-    showToast('Applied quick conversion', 'success');
-  };
-  
   // Handler for input changes with the new expression input
   const handleInputChange = (value: string, parsedValue: number | null) => {
     setFromValue(value);
     
     if (parsedValue === null) {
-      setValidationError('Invalid expression');
       setConvertedValue(null);
     } else {
-      setValidationError(null);
       // Conversion logic happens in the useEffect
     }
   };
@@ -837,14 +760,10 @@ const Converter: React.FC<{
     const numericValue = parseFloat(value);
     
     if (isNaN(numericValue)) {
-      setValidationError('Please enter a valid number');
       setConvertedValue(null);
       setFormattedConvertedValue('');
       return;
     }
-    
-    // Clear validation error
-    setValidationError(null);
     
     // Skip if no units are selected
     if (!source || !target) {
@@ -925,7 +844,6 @@ const Converter: React.FC<{
       
     } catch (error) {
       console.error('Conversion error:', error);
-      setValidationError('Conversion error. Please try again.');
       setConvertedValue(null);
       setFormattedConvertedValue('');
     } finally {
@@ -1024,34 +942,31 @@ const Converter: React.FC<{
             </div>
             
             {/* Category selection */}
-            {showCategorySelection ? (
-              <CategorySelector
-                selectedCategory={selectedCategory}
-                onSelectCategory={handleCategoryChange}
-                availableCategories={availableCategories}
-                isLoading={categoryLoading}
-                showBackButton={true}
-                onBack={() => setShowCategorySelection(false)}
-                onSelectUnit={handleUnitSearch}
-              />
-            ) : (
-              <button
+            <button
                 className="w-full py-3 px-4 mb-4 bg-card border border-border rounded-lg flex items-center justify-between hover:bg-muted/50 transition-colors"
-                onClick={() => setShowCategorySelection(true)}
                 aria-label="Select category"
+                onClick={() => setShowCategorySelection(true)}
               >
                 <div className="flex items-center gap-2">
+                  {unitCategoryInfo[selectedCategory as UnitCategoryId]?.icon && (
+                    <div className="p-2 rounded-full bg-primary/10">
+                      <CategoryIcon 
+                        iconName={unitCategoryInfo[selectedCategory as UnitCategoryId].icon} 
+                        className="text-primary w-5 h-5"
+                        size={20}
+                      />
+                    </div>
+                  )}
                   <span className="text-lg font-medium">
                     {unitCategoryInfo[selectedCategory as UnitCategoryId]?.name || 'Select Category'}
                   </span>
                 </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                <ChevronRight className="text-muted-foreground w-5 h-5" />
               </button>
-            )}
             
             {/* Main conversion card */}
-            <div className="bg-card border border-border rounded-lg p-5">
-              <div className="flex justify-between mb-4">
+            <div className="bg-card border border-border rounded-lg p-6">
+              <div className="flex justify-between mb-6">
                 <h2 className="text-lg font-medium">Convert</h2>
                 
                 {/* Conversion actions */}
@@ -1087,7 +1002,7 @@ const Converter: React.FC<{
                 />
               </div>
               
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {/* Main conversion section - reorganized layout */}
                 <div>
                   {/* Value input */}
@@ -1133,7 +1048,7 @@ const Converter: React.FC<{
                 </div>
                 
                 {/* Conversion result */}
-                <div>
+                <div className="py-2">
                   {fromUnitData && toUnitData && (
                     <ConversionResult
                       fromValue={parseFloat(fromValue) || 0}
@@ -1148,19 +1063,23 @@ const Converter: React.FC<{
                 
                 {/* Relationship indicator */}
                 {fromUnitData && toUnitData && convertedValue !== null && (
-                  <RelationshipIndicator
-                    fromUnit={fromUnitData}
-                    toUnit={toUnitData}
-                    conversionFactor={convertedValue / (parseFloat(fromValue) || 1)}
-                  />
+                  <div className="mt-6">
+                    <RelationshipIndicator
+                      fromUnit={fromUnitData}
+                      toUnit={toUnitData}
+                      conversionFactor={convertedValue / (parseFloat(fromValue) || 1)}
+                    />
+                  </div>
                 )}
                 
                 {/* Educational unit information */}
                 {toUnit && (
-                  <UnitInformation
-                    unitId={toUnit}
-                    categoryId={selectedCategory}
-                  />
+                  <div className="mt-8 pt-6 border-t border-border">
+                    <UnitInformation
+                      unitId={toUnit}
+                      categoryId={selectedCategory}
+                    />
+                  </div>
                 )}
               </div>
             </div>
@@ -1215,6 +1134,34 @@ const Converter: React.FC<{
                         Save Preset
                       </button>
                     </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Category selection modal */}
+            {showCategorySelection && (
+              <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 modal-overlay">
+                <div className="bg-card border border-border rounded-lg shadow-lg w-full max-w-3xl modal-content">
+                  <div className="p-4 border-b border-border flex items-center justify-between">
+                    <h3 className="font-semibold">Select Category</h3>
+                    <button
+                      onClick={() => setShowCategorySelection(false)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                  
+                  <div className="p-4">
+                    <CategorySelector
+                      selectedCategory={selectedCategory}
+                      availableCategories={Object.values(UnitCategoryId)}
+                      onSelect={(categoryId) => {
+                        handleCategoryChange(categoryId);
+                        setShowCategorySelection(false);
+                      }}
+                    />
                   </div>
                 </div>
               </div>

@@ -8,6 +8,7 @@ import { Switch } from '../components/ui/switch';
 import { Label } from '../components/ui/label';
 import SpecializedConverterContainer from '../components/converter/SpecializedConverterContainer';
 import { trackCategoryChanged } from '../lib/analytics';
+import { Calculator, Settings } from 'lucide-react';
 
 // Import the original Converter for backward compatibility
 import OriginalConverter from './Converter';
@@ -135,8 +136,14 @@ const ConverterWithSpecialized: React.FC<ConverterProps> = ({
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <div className="flex justify-center w-full">
           <TabsList className="w-full max-w-md">
-            <TabsTrigger value="standard">Standard</TabsTrigger>
-            <TabsTrigger value="specialized">Specialized</TabsTrigger>
+            <TabsTrigger value="standard">
+              <Calculator className="mr-2 h-4 w-4" />
+              Standard
+            </TabsTrigger>
+            <TabsTrigger value="specialized">
+              <Settings className="mr-2 h-4 w-4" />
+              Specialized
+            </TabsTrigger>
           </TabsList>
         </div>
         

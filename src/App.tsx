@@ -9,6 +9,7 @@ import './index.css';
 
 // Pages
 import Home from './pages/Home';
+import Explore from './pages/Explore';
 import History from './pages/History';
 import Settings from './pages/Settings';
 import Layout from './components/Layout';
@@ -95,6 +96,7 @@ function App() {
               
               <Routes>
                 <Route path="/" element={<Home />} />
+                <Route path="/explore" element={<Explore />} />
                 
                 {/* SEO-friendly URL format - higher priority */}
                 <Route 

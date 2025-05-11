@@ -7,7 +7,6 @@ interface UnitSelectorProps {
   units: Unit[];
   selectedUnitId: string;
   onChange: (unitId: string) => void;
-  label?: string;
   recentUnits?: Unit[];
   loading?: boolean;
 }
@@ -16,7 +15,6 @@ const UnitSelector: React.FC<UnitSelectorProps> = ({
   units,
   selectedUnitId,
   onChange,
-  label = 'Unit',
   recentUnits = [],
   loading = false,
 }) => {
@@ -103,32 +101,39 @@ const UnitSelector: React.FC<UnitSelectorProps> = ({
     setSearchQuery('');
   };
   
+  // Format the unit name to prevent repetition
+  const formatUnitName = (name: string, symbol: string) => {
+    // If the name contains the symbol, don't show the symbol separately
+    if (name.toLowerCase().includes(symbol.toLowerCase())) {
+      return name;
+    }
+    return name;
+  };
+  
   return (
     <div className="unit-selector-container">
       {/* {label && <label className="block text-sm text-muted-foreground mb-1">{label}</label>} */}
       
       <div className="relative" ref={dropdownRef}>
-        <button 
-          className="selector-button flex items-center justify-between w-full p-2 bg-card border border-border rounded-md hover:border-primary/50 transition-colors"
+        <button
+          type="button"
           onClick={() => setIsOpen(!isOpen)}
-          aria-haspopup="listbox"
-          aria-expanded={isOpen}
-          aria-label={`Select ${label.toLowerCase()}, currently ${selectedUnit?.name}`}
+          className="w-full h-[48px] flex items-center justify-between px-3 py-2 bg-background border border-border rounded-lg hover:border-primary/50 transition-colors"
         >
-          <div className="flex items-center">
-            <span className="font-medium">{selectedUnit?.name || 'Select unit'}</span>
-            {selectedUnit?.symbol && (
-              <span className="text-sm text-muted-foreground ml-2">{selectedUnit.symbol}</span>
-            )}
+          <div className="flex items-center flex-1">
+            <div className="flex flex-row items-center gap-2">
+              <span className="font-medium truncate text-base">{selectedUnit.name}</span>
+              <span className="text-xs text-muted-foreground truncate">{selectedUnit.symbol}</span>
+            </div>
           </div>
-          <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''}`} />
+          <ChevronDown className={`w-4 h-4 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </button>
         
         {isOpen && (
-          <div className="dropdown-container absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-lg z-10 max-h-64 overflow-hidden flex flex-col">
-            <div className="search-container p-2 border-b border-border sticky top-0 bg-card z-10">
+          <div className="dropdown-container absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-lg z-10 max-h-[300px] w-[calc(100%+2rem)] -ml-4 overflow-hidden flex flex-col">
+            <div className="search-container p-3 border-b border-border sticky top-0 bg-card z-10">
               <div className="relative">
-                <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
                   <Search className="w-4 h-4" />
                 </div>
                 <input
@@ -137,15 +142,15 @@ const UnitSelector: React.FC<UnitSelectorProps> = ({
                   placeholder="Search units..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-2 py-1.5 bg-muted border-0 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full pl-10 pr-8 py-2 bg-muted border-0 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     aria-label="Clear search"
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-4 h-4" />
                   </button>
                 )}
               </div>
@@ -153,54 +158,54 @@ const UnitSelector: React.FC<UnitSelectorProps> = ({
             
             <div className="units-container overflow-y-auto scrollbar-thin scrollbar-thumb-rounded scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
               {loading ? (
-                <div className="p-2 space-y-2">
+                <div className="p-3 space-y-3">
                   {[1, 2, 3].map(i => (
-                    <div key={i} className="h-8 bg-muted rounded animate-pulse" />
+                    <div key={i} className="h-10 bg-muted rounded animate-pulse" />
                   ))}
                 </div>
               ) : (
                 <>
                   {/* Recent units section */}
                   {recentUnits.length > 0 && !searchQuery && (
-                    <div className="recent-units p-1">
+                    <div className="recent-units p-2">
                       <div className="px-2 py-1 text-xs font-medium text-muted-foreground">Recent</div>
                       {recentUnits.map(unit => (
                         <button
                           key={`recent-${unit.id}`}
-                          className={`w-full px-2 py-1.5 text-left flex items-center justify-between hover:bg-muted transition-colors rounded-sm ${
+                          className={`w-full px-3 py-2 text-left flex items-center justify-between hover:bg-muted transition-colors rounded-md ${
                             unit.id === selectedUnitId ? 'bg-primary/10 text-primary' : ''
                           }`}
                           onClick={() => handleUnitSelect(unit.id)}
                           role="option"
                           aria-selected={unit.id === selectedUnitId}
                         >
-                          <span>{unit.name}</span>
-                          <span className="text-sm text-muted-foreground">{unit.symbol}</span>
+                          <span className="truncate mr-2">{formatUnitName(unit.name, unit.symbol)}</span>
+                          <span className="text-sm text-muted-foreground flex-shrink-0">{unit.symbol}</span>
                         </button>
                       ))}
-                      <div className="border-t border-border my-1"></div>
+                      <div className="border-t border-border my-2"></div>
                     </div>
                   )}
                   
                   {/* Main unit list */}
-                  <div className="unit-list p-1" role="listbox">
+                  <div className="unit-list p-2" role="listbox">
                     {filteredUnits.length === 0 ? (
-                      <div className="px-2 py-4 text-center text-muted-foreground">
+                      <div className="px-3 py-4 text-center text-muted-foreground">
                         No units found matching "{searchQuery}"
                       </div>
                     ) : (
                       filteredUnits.map(unit => (
                         <button
                           key={unit.id}
-                          className={`w-full px-2 py-1.5 text-left flex items-center justify-between hover:bg-muted transition-colors rounded-sm ${
+                          className={`w-full px-3 py-2 text-left flex items-center justify-between hover:bg-muted transition-colors rounded-md ${
                             unit.id === selectedUnitId ? 'bg-primary/10 text-primary' : ''
                           }`}
                           onClick={() => handleUnitSelect(unit.id)}
                           role="option"
                           aria-selected={unit.id === selectedUnitId}
                         >
-                          <span>{unit.name}</span>
-                          <span className="text-sm text-muted-foreground">{unit.symbol}</span>
+                          <span className="truncate mr-2">{formatUnitName(unit.name, unit.symbol)}</span>
+                          <span className="text-sm text-muted-foreground flex-shrink-0">{unit.symbol}</span>
                         </button>
                       ))
                     )}

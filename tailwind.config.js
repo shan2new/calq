@@ -1,10 +1,12 @@
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
+  darkMode: ["class"],
   content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
+    './pages/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    './app/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx}',
   ],
-  darkMode: ["class", '[data-theme="dark"]'],
   theme: {
     container: {
       center: true,
@@ -15,38 +17,38 @@ export default {
     },
     extend: {
       colors: {
-        border: "var(--border)",
-        input: "var(--input)",
-        ring: "var(--ring)",
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "var(--primary)",
-          foreground: "var(--primary-foreground)",
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
-          DEFAULT: "var(--secondary)",
-          foreground: "var(--secondary-foreground)",
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
         },
         destructive: {
-          DEFAULT: "var(--destructive)",
-          foreground: "var(--destructive-foreground)",
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
         },
         muted: {
-          DEFAULT: "var(--muted)",
-          foreground: "var(--muted-foreground)",
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
         },
         accent: {
-          DEFAULT: "var(--accent)",
-          foreground: "var(--accent-foreground)",
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
         },
         popover: {
-          DEFAULT: "var(--popover)",
-          foreground: "var(--popover-foreground)",
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
         },
         card: {
-          DEFAULT: "var(--card)",
-          foreground: "var(--card-foreground)",
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
         },
       },
       borderRadius: {
@@ -56,72 +58,76 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: { height: "0" },
+          from: { height: 0 },
           to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
           from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
+          to: { height: 0 },
         },
-        "fadeIn": {
-          from: { opacity: "0", transform: "translateY(10px)" },
-          to: { opacity: "1", transform: "translateY(0)" },
+        "result-flash": {
+          "0%": { opacity: 0 },
+          "10%": { opacity: 1 },
+          "90%": { opacity: 1 },
+          "100%": { opacity: 0 },
         },
-        "conversion-success-circle": {
+        "result-updated": {
           "0%": { 
-            strokeDashoffset: "140", 
-            opacity: "0.2"
+            transform: "translateY(10px)",
+            opacity: 0,
           },
-          "40%": { 
-            strokeDashoffset: "140", 
-            opacity: "0.5"
+          "100%": {
+            transform: "translateY(0)",
+            opacity: 1,
           },
-          "80%": { 
-            strokeDashoffset: "0", 
-            opacity: "0.8"
-          },
-          "100%": { 
-            strokeDashoffset: "0", 
-            opacity: "0"
-          }
         },
-        "conversion-success-check": {
-          "0%": { 
-            strokeDashoffset: "30", 
-            opacity: "0.2"
+        "dropdown-enter": {
+          "0%": {
+            opacity: 0,
+            transform: "translateY(-10px)",
           },
-          "40%": { 
-            strokeDashoffset: "30", 
-            opacity: "0.5"
+          "100%": {
+            opacity: 1,
+            transform: "translateY(0)",
           },
-          "70%": { 
-            strokeDashoffset: "0", 
-            opacity: "1"
-          },
-          "90%": { 
-            strokeDashoffset: "0", 
-            opacity: "0.8"
-          },
-          "100%": { 
-            strokeDashoffset: "0", 
-            opacity: "0"
-          }
         },
-        "conversion-success-fade": {
-          "0%": { opacity: "1", transform: "scale(0.8)" },
-          "70%": { opacity: "1", transform: "scale(1)" },
-          "100%": { opacity: "0", transform: "scale(1.1)" }
-        }
+        "ripple": {
+          "0%": {
+            transform: "scale(0)",
+            opacity: 0.5,
+          },
+          "100%": {
+            transform: "scale(2)",
+            opacity: 0,
+          },
+        },
+        "skeleton-loading": {
+          "0%": { backgroundPosition: "200% 0" },
+          "100%": { backgroundPosition: "-200% 0" },
+        },
+        "success-checkmark": {
+          "0%": { transform: "scale(0)" },
+          "50%": { transform: "scale(1.2)" },
+          "100%": { transform: "scale(1)" },
+        },
+        "error-shake": {
+          "0%, 100%": { transform: "translateX(0)" },
+          "25%": { transform: "translateX(-5px)" },
+          "75%": { transform: "translateX(5px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "fadeIn": "fadeIn 0.3s ease-out",
-        "conversion-success": "conversion-success-fade 1s ease-out forwards",
-        "conversion-circle": "conversion-success-circle 1s ease-out forwards",
-        "conversion-check": "conversion-success-check 1s ease-out forwards 0.2s"
+        "result-flash": "result-flash 0.7s ease-out forwards",
+        "result-updated": "result-updated 0.3s ease-out forwards",
+        "dropdown-enter": "dropdown-enter 0.2s ease-out forwards",
+        "ripple": "ripple 0.6s ease-out",
+        "skeleton-loading": "skeleton-loading 1.5s infinite",
+        "success-checkmark": "success-checkmark 0.5s ease-out forwards",
+        "error-shake": "error-shake 0.4s ease-in-out",
       },
     },
   },
-  plugins: [],
+  plugins: [require("tailwindcss-animate")],
 } 

@@ -259,10 +259,10 @@ const History: React.FC = () => {
           <div className="bg-card border border-border rounded-lg p-5 text-center">
             <p className="text-muted-foreground mb-3">No history yet</p>
             <p className="text-sm text-muted-foreground mb-4">
-              Tap <Link to="/converter" className="text-primary hover:underline">Converter</Link> to convert units
+              Tap <Link to="/" className="text-primary hover:underline">Converter</Link> to convert units
             </p>
             <Link 
-              to="/converter" 
+              to="/" 
               className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-all duration-150 active:scale-95"
             >
               <Calculator className="w-4 h-4" aria-hidden="true" />

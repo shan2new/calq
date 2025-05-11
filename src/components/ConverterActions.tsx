@@ -57,7 +57,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
 }) => {
   return (
     <button
-      className={`fixed right-4 bottom-16 w-12 h-12 rounded-full bg-primary text-white shadow-lg flex items-center justify-center transition-all duration-300 ${
+      className={`fixed right-6 bottom-20 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center transition-all duration-300 ${
         visible ? 'transform scale-100 opacity-100' : 'transform scale-0 opacity-0 pointer-events-none'
       }`}
       onClick={onClick}
@@ -164,14 +164,14 @@ const ConverterActions: React.FC<ConverterActionsProps> = ({
   
   return (
     <div className="converter-actions relative">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 relative z-10">
         <Tooltip
           content="Swap units"
           position="top"
           visible={showTooltips}
         >
           <button 
-            className="action-button p-2 rounded-md hover:bg-muted transition-colors ripple"
+            className="action-button min-w-[44px] min-h-[44px] p-3 rounded-md hover:bg-muted transition-colors ripple"
             onClick={() => handleAction(onSwap)}
             aria-label="Swap units"
             ref={swapButtonRef}
@@ -186,7 +186,7 @@ const ConverterActions: React.FC<ConverterActionsProps> = ({
           visible={showTooltips}
         >
           <button 
-            className={`action-button p-2 rounded-md hover:bg-muted transition-colors ripple ${
+            className={`action-button min-w-[44px] min-h-[44px] p-3 rounded-md hover:bg-muted transition-colors ripple ${
               isFavorite ? 'text-primary' : ''
             }`}
             onClick={() => handleAction(onFavorite)}
@@ -204,7 +204,7 @@ const ConverterActions: React.FC<ConverterActionsProps> = ({
         >
           <div className="relative" ref={menuRef}>
             <button 
-              className="action-button p-2 rounded-md hover:bg-muted transition-colors ripple"
+              className="action-button min-w-[44px] min-h-[44px] p-3 rounded-md hover:bg-muted transition-colors ripple"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               aria-label="More options"
               aria-haspopup="menu"
@@ -214,48 +214,48 @@ const ConverterActions: React.FC<ConverterActionsProps> = ({
             </button>
             
             {isMenuOpen && (
-              <div className="absolute right-0 mt-1 bg-card border border-border rounded-md shadow-lg z-20 min-w-40">
+              <div className="absolute right-0 mt-2 bg-card border border-border rounded-md shadow-lg z-30 min-w-48">
                 <div className="py-1" role="menu">
                   {onCopy && (
                     <button
-                      className="w-full px-4 py-2 text-left flex items-center gap-2 hover:bg-muted transition-colors"
+                      className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-muted transition-colors"
                       onClick={() => handleAction(onCopy)}
                       role="menuitem"
                     >
-                      <Copy className="w-4 h-4" />
+                      <Copy className="w-5 h-5" />
                       <span>Copy result</span>
                     </button>
                   )}
                   
                   {onShare && (
                     <button
-                      className="w-full px-4 py-2 text-left flex items-center gap-2 hover:bg-muted transition-colors"
+                      className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-muted transition-colors"
                       onClick={() => handleAction(onShare)}
                       role="menuitem"
                     >
-                      <Share className="w-4 h-4" />
+                      <Share className="w-5 h-5" />
                       <span>Share conversion</span>
                     </button>
                   )}
                   
                   <button
-                    className="w-full px-4 py-2 text-left flex items-center gap-2 hover:bg-muted transition-colors"
+                    className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-muted transition-colors"
                     onClick={() => handleAction(onSavePreset)}
                     role="menuitem"
                     disabled={!canSave}
                   >
-                    <Save className="w-4 h-4" />
+                    <Save className="w-5 h-5" />
                     <span>Save as preset</span>
                   </button>
                   
                   {onOpenHelp && (
                     <button
-                      className="w-full px-4 py-2 text-left flex items-center gap-2 hover:bg-muted transition-colors"
+                      className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-muted transition-colors"
                       onClick={() => handleAction(onOpenHelp)}
                       role="menuitem"
                     >
-                      <Info className="w-4 h-4" />
-                      <span>Help & info</span>
+                      <Info className="w-5 h-5" />
+                      <span>Help</span>
                     </button>
                   )}
                 </div>
@@ -263,14 +263,7 @@ const ConverterActions: React.FC<ConverterActionsProps> = ({
             )}
           </div>
         </Tooltip>
-      </div>
-      
-      <FloatingActionButton 
-        visible={showFAB} 
-        onClick={onSavePreset}
-        icon={<Plus className="w-5 h-5" />}
-        label="Save preset"
-      />
+      </div>      
     </div>
   );
 };
